@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSC Transparency - Full Test</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="lib/inter.css">
+    <link rel="stylesheet" href="lib/fontawesome.min.css">
+</head>
+<body>
+    <div id="app"></div>
+    <script src="script.js"></script>
+    <script>
+        // Pre-populate users with super admin
+        var initialUsers = [
+            {
+                id: 1,
+                name: 'Super Admin',
+                email: 'superAdmin@csc.com',
+                password: 'superAdmin123',
+                role: 'admin',
+                active: true,
+                adminRole: 'Super Admin'
+            },
+            {
+                id: 2,
+                name: 'Test Student',
+                email: 'student@csc.com',
+                password: 'student123',
+                role: 'student',
+                active: true,
+                course: 'BSIT',
+                section: 'A',
+                organization: {
+                    name: 'Computer Society',
+                    position: 'Member'
+                }
+            }
+        ];
+        
+        var initialEvents = [
+            {
+                id: 1,
+                title: 'General Assembly April 2026',
+                date: '2026-04-30',
+                status: 'upcoming',
+                qrCode: 'GA-APRIL-2026'
+            }
+        ];
+        
+        var initialQR = [
+            {
+                id: 1714521600000,
+                code: 'ATT-GENERAL-1714521600000',
+                name: 'General Meeting',
+                eventId: null,
+                eventTitle: 'April 2026',
+                date: '2026-04-30',
+                attendees: [
+                    { name: 'John Doe', email: 'john@csc.com', course: 'BSIT', section: 'A', date: '2026-04-30', time: '09:00' },
+                    { name: 'Jane Smith', email: 'jane@csc.com', course: 'BSCS', section: 'B', date: '2026-04-30', time: '09:05' }
+                ]
+            }
+        ];
+        
+        var appData = {
+            users: initialUsers,
+            events: initialEvents,
+            news: [],
+            announcements: [],
+            files: [],
+            qrCodes: initialQR,
+            settings: {}
+        };
+        
+        // Save to localStorage before the app initializes
+        localStorage.setItem('cscTransparencyData', JSON.stringify(appData));
+        
+        // Auto-login as super admin
+        localStorage.setItem('cscCurrentUser', JSON.stringify(initialUsers[0]));
+        
+        console.log('Initialized with super admin and QR codes');
+    </script>
+</body>
+</html>
