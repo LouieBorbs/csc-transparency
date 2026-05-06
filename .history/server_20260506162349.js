@@ -1,6 +1,5 @@
 require('dotenv').config();
 const express = require('express');
-require('./api/attendance/mark');
 const cors = require('cors');
 const path = require('path');
 const attendanceRouter = require('./api/attendance/mark');
@@ -20,7 +19,7 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // API routes (more specific paths first)
-app.use('/api/attendance', require('./api/attendance/mark'));
+app.use('/api/attendance', attendanceRouter);
 
 // Health check
 app.get('/', (req, res) => {
@@ -56,3 +55,6 @@ app.use((err, req, res, next) => {
     });
 });
 
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});

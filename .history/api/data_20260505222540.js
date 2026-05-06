@@ -34,28 +34,40 @@ const TABLES = {
 // GET /api/data/finance
 router.get('/finance', async (req, res) => {
   const { data, error } = await supabase.from('finance').select('*').eq('id', 'main').maybeSingle();
-  if (error) return res.status(500).json({ success: false, message: error.message });
+  if (error) {
+  console.error('Supabase error:', error.message, '| Table:', table || 'finance/positionMappings');
+  return res.status(500).json({ success: false, message: error.message });
+}
   res.json({ success: true, data });
 });
 
 // PUT /api/data/finance
 router.put('/finance', async (req, res) => {
   const { error } = await supabase.from('finance').update({ ...req.body, updated_at: new Date().toISOString() }).eq('id', 'main');
-  if (error) return res.status(500).json({ success: false, message: error.message });
+  if (error) {
+  console.error('Supabase error:', error.message, '| Table:', table || 'finance/positionMappings');
+  return res.status(500).json({ success: false, message: error.message });
+}
   res.json({ success: true });
 });
 
 // GET /api/data/positionMappings
 router.get('/positionMappings', async (req, res) => {
   const { data, error } = await supabase.from('position_mappings').select('*').eq('id', 'main').maybeSingle();
-  if (error) return res.status(500).json({ success: false, message: error.message });
+  if (error) {
+  console.error('Supabase error:', error.message, '| Table:', table || 'finance/positionMappings');
+  return res.status(500).json({ success: false, message: error.message });
+}
   res.json({ success: true, data: data ? data.mappings : {} });
 });
 
 // PUT /api/data/positionMappings
 router.put('/positionMappings', async (req, res) => {
   const { error } = await supabase.from('position_mappings').update({ mappings: req.body }).eq('id', 'main');
-  if (error) return res.status(500).json({ success: false, message: error.message });
+ if (error) {
+  console.error('Supabase error:', error.message, '| Table:', table || 'finance/positionMappings');
+  return res.status(500).json({ success: false, message: error.message });
+}
   res.json({ success: true });
 });
 
@@ -91,7 +103,10 @@ router.delete('/:table/:id', async (req, res) => {
   const table = TABLES[req.params.table];
   if (!table) return res.status(404).json({ success: false, message: 'Unknown table: ' + req.params.table });
   const { error } = await supabase.from(table).delete().eq('id', req.params.id);
-  if (error) return res.status(500).json({ success: false, message: error.message });
+  if (error) {
+  console.error('Supabase error:', error.message, '| Table:', table || 'finance/positionMappings');
+  return res.status(500).json({ success: false, message: error.message });
+}
   res.json({ success: true });
 });
 

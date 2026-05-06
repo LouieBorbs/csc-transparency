@@ -208,7 +208,7 @@ var App = {
 
     loadData: function() {
         try {
-            var stored = null; // localStorage removed - data loads from Supabase API
+            var stored = localStorage.getItem('cscTransparencyData');
             if (stored) {
                 this.data = JSON.parse(stored);
                 if (!this.data.finance) this.data.finance = { currentFunds: 50000, transactions: [] };
@@ -343,7 +343,9 @@ var App = {
     },
 
     saveData: function() {
-        // Data is saved to Supabase via API - localStorage removed
+        try {
+            localStorage.setItem('cscTransparencyData', JSON.stringify(this.data));
+        } catch(e) {}
     },
 
     // Check if a position can be assigned based on organization limits
@@ -415,21 +417,25 @@ var App = {
 
     loadPreferences: function() {
         try {
-            // localStorage removed - darkMode is session-only, defaults to false
-            this.darkMode = false;
+            var prefs = localStorage.getItem('cscPreferences');
+            if (prefs) {
+                var p = JSON.parse(prefs);
+                this.darkMode = p.darkMode || false;
+            }
         } catch(e) {}
     },
 
     savePreferences: function() {
         try {
-            // localStorage removed - preferences are session-only
+            localStorage.setItem('cscPreferences', JSON.stringify({ darkMode: this.darkMode }));
         } catch(e) {}
     },
 
     checkAuth: function() {
         try {
-            var user = this.currentUser; // localStorage removed - in-memory session only
+            var user = localStorage.getItem('cscCurrentUser');
             if (user) {
+                this.currentUser = JSON.parse(user);
                 this.renderDashboard();
             } else {
                 this.renderLandingPage();
@@ -657,7 +663,7 @@ var App = {
                             self.saveData();
                         }
                         self.currentUser = user;
-                        // localStorage removed - session stored in memory
+                        localStorage.setItem('cscCurrentUser', JSON.stringify(user));
                         self.renderDashboard();
                     } else {
                         var err = document.getElementById('login-error');
@@ -2372,7 +2378,7 @@ renderAdminContent: function() {
         var movedEvents = (this.data.events || []).filter(function(e) { return e.status === 'moved'; });
         var movedThisMonth = movedEvents.filter(function(e) { return e.date && e.date.slice(0, 7) === currentMonth; });
         
-        var finance = this.data.finance || { currentFunds: 0, transactions: [] };
+        var finance = this.data.finance || {}; finance.currentFunds = (finance.currentFunds != null ? finance.currentFunds : 0); finance.transactions = finance.transactions || [];
         var totalExpenses = finance.transactions.filter(function(t) { return t.type === 'expense'; }).reduce(function(sum, t) { return sum + t.amount; }, 0);
         var totalFundsRaised = finance.transactions.filter(function(t) { return t.type === 'funds_raised'; }).reduce(function(sum, t) { return sum + t.amount; }, 0);
         
@@ -4721,7 +4727,7 @@ var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:
 
     renderAdminFinance: function() {
         var self = this;
-        var finance = this.data.finance || { currentFunds: 0, transactions: [] };
+        var finance = this.data.finance || {}; finance.currentFunds = (finance.currentFunds != null ? finance.currentFunds : 0); finance.transactions = finance.transactions || [];
         
         var html = '<div class="content-actions">' +
             '<button class="btn btn-primary" id="add-transaction-btn"><i class="fas fa-plus"></i> Add Transaction</button>' +
@@ -4755,7 +4761,7 @@ var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:
                     '<td>' + t.date + '</td>' +
                     '<td><span class="badge ' + typeBadge + '">' + typeLabel + '</span></td>' +
                     '<td>' + (t.eventTitle || '-') + '</td>' +
-                    '<td>₱' + (t.amount || 0).toLocaleString() + '</td>' +
+                    '<td>₱' + t.amount.toLocaleString() + '</td>' +
                     '<td>' + t.description + '</td>' +
                     '<td style="white-space:nowrap;">' +
                     '<button class="btn btn-secondary btn-sm" data-action="edit-transaction" data-id="' + t.id + '">Edit</button> ' +
@@ -4961,7 +4967,7 @@ var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:
         var announcements = this.data.announcements || [];
         var suggestions = this.data.suggestions || [];
         var complaints = this.data.complaints || [];
-        var finance = this.data.finance || { currentFunds: 0, transactions: [] };
+        var finance = this.data.finance || {}; finance.currentFunds = (finance.currentFunds != null ? finance.currentFunds : 0); finance.transactions = finance.transactions || [];
         
         var totalStudents = students.length;
         var activeStudents = students.filter(function(s) { return s.active; }).length;
@@ -5677,7 +5683,7 @@ var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:
         var pollsAnswered = this.currentUser.pollsAnswered ? this.currentUser.pollsAnswered.length : 0;
         var suggestionsMade = (this.data.suggestions || []).filter(function(s) { return s.email === self.currentUser.email; }).length;
         
-        var finance = this.data.finance || { currentFunds: 0, transactions: [] };
+        var finance = this.data.finance || {}; finance.currentFunds = (finance.currentFunds != null ? finance.currentFunds : 0); finance.transactions = finance.transactions || [];
         var totalExpenses = finance.transactions.filter(function(t) { return t.type === 'expense'; }).reduce(function(sum, t) { return sum + t.amount; }, 0);
         var totalFundsRaised = finance.transactions.filter(function(t) { return t.type === 'funds_raised'; }).reduce(function(sum, t) { return sum + t.amount; }, 0);
         
@@ -5837,7 +5843,7 @@ var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:
     },
 
     renderStudentFinance: function() {
-        var finance = this.data.finance || { currentFunds: 0, transactions: [] };
+        var finance = this.data.finance || {}; finance.currentFunds = (finance.currentFunds != null ? finance.currentFunds : 0); finance.transactions = finance.transactions || [];
         
         var totalExpenses = finance.transactions.filter(function(t) { return t.type === 'expense'; }).reduce(function(sum, t) { return sum + t.amount; }, 0);
         var totalFundsRaised = finance.transactions.filter(function(t) { return t.type === 'funds_raised'; }).reduce(function(sum, t) { return sum + t.amount; }, 0);
@@ -5855,7 +5861,7 @@ var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:
             finance.transactions.forEach(function(t) {
                 var typeBadge = t.type === 'expense' ? 'badge-danger' : 'badge-primary';
                 var typeLabel = t.type === 'expense' ? 'Expense' : 'Funds Raised';
-                html += '<tr><td>' + t.date + '</td><td><span class="badge ' + typeBadge + '">' + typeLabel + '</span></td><td>' + (t.eventTitle || '-') + '</td><td>₱' + (t.amount || 0).toLocaleString() + '</td><td>' + t.description + '</td></tr>';
+                html += '<tr><td>' + t.date + '</td><td><span class="badge ' + typeBadge + '">' + typeLabel + '</span></td><td>' + (t.eventTitle || '-') + '</td><td>₱' + t.amount.toLocaleString() + '</td><td>' + t.description + '</td></tr>';
             });
             html += '</tbody></table></div>';
         }
@@ -6052,7 +6058,7 @@ var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:
         });
 
         document.querySelector('[data-action="logout"]') && document.querySelector('[data-action="logout"]').addEventListener('click', function() {
-            // localStorage removed
+            localStorage.removeItem('cscCurrentUser');
             self.currentUser = null;
             self.renderLandingPage();
         });
@@ -7356,8 +7362,7 @@ var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:
                               html5QrCode.stop().then(function() {
                                   html5QrCode.clear();
                                   
-                                          fetch('/api/attendance/mark', {
-
+                                          fetch('http://localhost:3000/api/attendance/mark', {
                                               method: 'POST',
                                               headers: { 'Content-Type': 'application/json' },
                                               body: JSON.stringify({

@@ -6,7 +6,7 @@ const path = require('path');
 const attendanceRouter = require('./api/attendance/mark');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = 3001;
 
 // Middleware
 app.use(cors({
@@ -20,7 +20,7 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // API routes (more specific paths first)
-app.use('/api/attendance', require('./api/attendance/mark'));
+app.use('/api/attendance', attendanceRouter);
 
 // Health check
 app.get('/', (req, res) => {
