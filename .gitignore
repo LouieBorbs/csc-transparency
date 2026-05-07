@@ -4,3 +4,4 @@ database/
 *.bak
 *.backup
 *.bak2
+.vercel

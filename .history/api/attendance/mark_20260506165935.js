@@ -1,10 +1,14 @@
+require('dotenv').config();
+
 const { createClient } = require('@supabase/supabase-js');
+
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_KEY
+  process.env.SUPABASE_ANON_KEY
 );
 
+module.exports = supabase;
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -14,6 +18,7 @@ module.exports = async function handler(req, res) {
   try {
     if (req.method === 'POST') {
       const { qrData, studentId, timestamp } = req.body || {};
+
       if (!studentId) return res.status(400).json({ success: false, message: 'Missing studentId' });
       if (!qrData) return res.status(400).json({ success: false, message: 'Missing qrData' });
 
@@ -40,7 +45,6 @@ module.exports = async function handler(req, res) {
       if (!sessionId) return res.status(400).json({ success: false, message: 'Invalid QR code format' });
       if (expiresAt && new Date(expiresAt) < new Date()) return res.status(400).json({ success: false, message: 'QR code has expired' });
 
-      // Check for duplicate
       const { data: existing } = await supabase
         .from('attendance_records')
         .select('id')
@@ -63,8 +67,7 @@ module.exports = async function handler(req, res) {
     }
 
     if (req.method === 'GET') {
-      const { data, error } = await supabase
-        .from('attendance_records').select('*').order('marked_at', { ascending: false });
+      const { data, error } = await supabase.from('attendance_records').select('*').order('marked_at', { ascending: false });
       if (error) return res.status(500).json({ success: false, message: error.message });
       return res.status(200).json({ success: true, data: data || [] });
     }
@@ -72,7 +75,7 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ success: false, message: 'Method not allowed' });
 
   } catch (err) {
-    console.error('Attendance error:', err);
+    console.error('Attendance API error:', err);
     return res.status(500).json({ success: false, message: 'Internal server error: ' + err.message });
   }
 };
