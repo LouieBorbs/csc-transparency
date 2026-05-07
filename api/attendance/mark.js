@@ -40,7 +40,7 @@ module.exports = async function handler(req, res) {
       const { data: existing } = await supabase
         .from('attendance_records').select('id')
         .eq('student_id', String(studentId)).eq('session_id', sessionId).maybeSingle();
-      if (existing) return res.status(400).json({ success: false, message: 'Already marked for this session' });
+       if (existing) return res.status(409).json({ success: false, message: 'Already marked for this session' });
 
       const { data, error } = await supabase.from('attendance_records').insert({
         student_id: String(studentId), session_id: sessionId,
@@ -48,7 +48,13 @@ module.exports = async function handler(req, res) {
         marked_at: timestamp || new Date().toISOString()
       }).select();
 
-      if (error) return res.status(500).json({ success: false, message: error.message });
+      if (error) {
+        // Check for unique constraint violation (duplicate)
+        if (error.code === '23505' || error.message.includes('duplicate') || error.message.includes('unique')) {
+          return res.status(409).json({ success: false, message: 'Already marked for this session' });
+        }
+        return res.status(500).json({ success: false, message: error.message });
+      }
       return res.status(200).json({ success: true, data: data ? data[0] : null });
     }
 

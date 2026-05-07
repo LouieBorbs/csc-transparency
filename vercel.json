@@ -3,6 +3,6 @@
   "routes": [
     { "src": "/api/attendance/(.*)", "dest": "/api/attendance/mark.js" },
     { "src": "/api/data/(.*)", "dest": "/api/data.js" },
-    { "src": "/(.*)", "dest": "/public/$1" }
+    { "src": "/(.*)", "dest": "/public/index.html" }
   ]
 }

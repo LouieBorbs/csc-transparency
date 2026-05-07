@@ -73,39 +73,68 @@ module.exports = async function handler(req, res) {
       }
     }
 
-    // ── generic tables ────────────────────────────────────────────────────
-    const table = TABLES[segment];
-    if (!table) return res.status(404).json({ success: false, message: 'Unknown table: ' + segment });
+     // ── generic tables ────────────────────────────────────────────────────
+     const table = TABLES[segment];
+     if (!table) return res.status(404).json({ success: false, message: 'Unknown table: ' + segment });
 
-    if (req.method === 'GET') {
-      const { data, error } = await supabase.from(table).select('*').order('created_at', { ascending: true });
-      if (error) return res.status(500).json({ success: false, message: error.message });
-      return res.status(200).json({ success: true, data: data || [] });
-    }
+     if (req.method === 'GET') {
+         const { data, error } = await supabase.from(table).select('*').order('created_at', { ascending: true, nullsFirst: true });
+         if (error) {
+             console.error('[API] GET error on', table, error);
+             return res.status(500).json({ success: false, message: error.message });
+         }
+         return res.status(200).json({ success: true, data: data || [] });
+     }
 
-    if (req.method === 'POST') {
-      if (!req.body) return res.status(400).json({ success: false, message: 'Missing body' });
-      // Strip id and _supabase_id — Supabase assigns its own id
-      const { id: _id, _supabase_id, created_at, ...insertBody } = clean(req.body);
-      const { data, error } = await supabase.from(table).insert(insertBody).select();
-      if (error) return res.status(500).json({ success: false, message: error.message });
-      return res.status(200).json({ success: true, data: data ? data[0] : null });
-    }
+     if (req.method === 'POST') {
+         if (!req.body) return res.status(400).json({ success: false, message: 'Missing body' });
+         // Strip id and _supabase_id — Supabase assigns its own id
+         const { id: _id, _supabase_id, created_at, ...insertBody } = clean(req.body);
+         // Add created_at timestamp
+         insertBody.created_at = new Date().toISOString();
+         
+         const { data, error } = await supabase.from(table).insert(insertBody).select();
+         if (error) {
+             // Check for unique constraint violation
+             if (error.code === '23505') {
+                 return res.status(409).json({ success: false, message: 'Duplicate record' });
+             }
+             console.error('[API] POST error on', table, error);
+             return res.status(500).json({ success: false, message: error.message });
+         }
+         return res.status(201).json({ success: true, data: data ? data[0] : null });
+     }
 
-    if (req.method === 'PUT') {
-      if (!id) return res.status(400).json({ success: false, message: 'Missing ID' });
-      const { id: _id, _supabase_id, created_at, ...updateBody } = clean(req.body || {});
-      const { data, error } = await supabase.from(table).update(updateBody).eq('id', id).select();
-      if (error) return res.status(500).json({ success: false, message: error.message });
-      return res.status(200).json({ success: true, data: data ? data[0] : null });
-    }
+     if (req.method === 'PUT') {
+         if (!id) return res.status(400).json({ success: false, message: 'Missing ID' });
+         const { id: _id, _supabase_id, created_at, ...updateBody } = clean(req.body || {});
+         // Add updated_at timestamp for optimistic locking
+         updateBody.updated_at = new Date().toISOString();
+         
+         const { data, error } = await supabase.from(table).update(updateBody).eq('id', id).select();
+         if (error) {
+             // Row not found or other error
+             if (error.code === 'PGRST116' || error.message.includes('not found')) {
+                 return res.status(404).json({ success: false, message: 'Record not found' });
+             }
+             console.error('[API] PUT error on', table, id, error);
+             return res.status(500).json({ success: false, message: error.message });
+         }
+         if (!data || data.length === 0) {
+             return res.status(404).json({ success: false, message: 'Record not found' });
+         }
+         return res.status(200).json({ success: true, data: data[0] });
+     }
 
-    if (req.method === 'DELETE') {
-      if (!id) return res.status(400).json({ success: false, message: 'Missing ID' });
-      const { error } = await supabase.from(table).delete().eq('id', id);
-      if (error) return res.status(500).json({ success: false, message: error.message });
-      return res.status(200).json({ success: true });
-    }
+     if (req.method === 'DELETE') {
+         if (!id) return res.status(400).json({ success: false, message: 'Missing ID' });
+         const { error } = await supabase.from(table).delete().eq('id', id);
+         if (error) {
+             console.error('[API] DELETE error on', table, id, error);
+             return res.status(500).json({ success: false, message: error.message });
+         }
+         return res.status(200).json({ success: true });
+     }
 
     return res.status(405).json({ success: false, message: 'Method not allowed' });
 

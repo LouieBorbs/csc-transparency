@@ -191,68 +191,93 @@ var App = {
         otpCodes: {}
     },
 
-    init: function() {
-        var self = this;
-        try {
-            this.setupDefaultData(); // set safe in-memory defaults
-            this.loadPreferences();
-            this.setupEventListeners();
-            if (this.darkMode) { document.body.classList.add('dark-mode'); }
-            // Show spinner while loading from Supabase
-            document.getElementById('app').innerHTML =
-                '<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Inter,sans-serif;flex-direction:column;gap:16px;">' +
-                '<div style="width:40px;height:40px;border:4px solid #e5e7eb;border-top-color:#4f46e5;border-radius:50%;animation:csc-spin 0.8s linear infinite;"></div>' +
-                '<p style="color:#6b7280;font-size:14px;margin:0;">Loading CSC Transparency...</p></div>' +
-                '<style>@keyframes csc-spin{to{transform:rotate(360deg)}}</style>';
-            this.loadDataFromAPI().then(function() { self.checkAuth(); }).catch(function() { self.checkAuth(); });
-        } catch(e) {
-            console.error(e);
-            this.renderLandingPage();
-        }
-    },
+     init: function() {
+         var self = this;
+         try {
+             this.setupDefaultData(); // set safe in-memory defaults
+             this.loadPreferences();
+             this.setupEventListeners();
+             if (this.darkMode) { document.body.classList.add('dark-mode'); }
+             // Show spinner while loading from Supabase
+             document.getElementById('app').innerHTML =
+                 '<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Inter,sans-serif;flex-direction:column;gap:16px;">' +
+                 '<div style="width:40px;height:40px;border:4px solid #e5e7eb;border-top-color:#4f46e5;border-radius:50%;animation:csc-spin 0.8s linear infinite;"></div>' +
+                 '<p style="color:#6b7280;font-size:14px;margin:0;">Loading CSC Transparency...</p></div>' +
+                 '<style>@keyframes csc-spin{to{transform:rotate(360deg)}}</style>';
+             this.loadDataFromAPI().then(function() { 
+                 self.checkAuth();
+                 // Start periodic data refresh after auth check
+                 self._startDataRefresh(); 
+             }).catch(function(err) { 
+                 console.error('[CSC] Failed to load data:', err);
+                 self.checkAuth();
+             });
+         } catch(e) {
+             console.error(e);
+             this.renderLandingPage();
+         }
+     },
 
     loadData: function() { this.setupDefaultData(); },
 
-    loadDataFromAPI: async function() {
-        var self = this;
-        var tableKeys = ['users','events','announcements','files','polls','suggestions',
-            'complaints','notifications','messages','comments','headlines',
-            'postRequests','mediaContent','qrCodes','auditLogs','activities',
-            'batches','organizations','reportFiles'];
-        try {
-            // Fetch all tables in parallel
-            var results = await Promise.all(tableKeys.map(function(t) {
-                return fetch('/api/data/' + t)
-                    .then(function(r) { return r.json(); })
-                    .catch(function() { return { success: false, data: [] }; });
-            }));
-            tableKeys.forEach(function(t, i) {
-                if (results[i] && results[i].success && Array.isArray(results[i].data)) {
-                    self.data[t] = results[i].data;
-                }
-            });
-            // Finance
-            var fr = await fetch('/api/data/finance').then(function(r){return r.json();}).catch(function(){return{success:false};});
-            if (fr.success && fr.data) {
-                self.data.finance = fr.data;
-                self.data.finance.currentFunds = fr.data.currentFunds != null ? Number(fr.data.currentFunds) : 0;
-                self.data.finance.transactions = Array.isArray(fr.data.transactions) ? fr.data.transactions : [];
-            }
-            // positionMappings
-            var pm = await fetch('/api/data/positionMappings').then(function(r){return r.json();}).catch(function(){return{success:false};});
-            if (pm.success && pm.data && Object.keys(pm.data).length > 0) { self.data.positionMappings = pm.data; }
-            // Normalize events
-            (self.data.events || []).forEach(function(e) {
-                if (!e.attendees) e.attendees = [];
-                if (!e.evaluations) e.evaluations = [];
-                if (!e.evaluationLink) e.evaluationLink = '';
-                if (!e.evaluationEnabled) e.evaluationEnabled = false;
-                if (!e.qrCode) e.qrCode = '';
-                if (!e.rsvps) e.rsvps = [];
-            });
-            console.log('[CSC] Loaded from Supabase');
-        } catch(e) { console.error('[CSC] API load failed:', e); }
-    },
+     loadDataFromAPI: async function() {
+         var self = this;
+         if (!window._CSC_SUPABASE_URL || !window._CSC_SUPABASE_KEY) {
+             console.warn('[CSC] Supabase credentials not set in index.html');
+             return;
+         }
+         var tableKeys = ['users','events','announcements','files','polls','suggestions',
+             'complaints','notifications','messages','comments','headlines',
+             'postRequests','mediaContent','qrCodes','auditLogs','activities',
+             'batches','organizations','reportFiles'];
+         try {
+             // Clear memory cache to ensure fresh data
+             this._memoryCache = {};
+             
+             var results = await Promise.all(tableKeys.map(function(t) {
+                 var sbTable = self._tableMap[t] || t;
+                 return self._sbGet(sbTable, '', false);
+             }));
+             tableKeys.forEach(function(t, i) {
+                 // Only update if we got data (could be empty array if table is truly empty)
+                 if (Array.isArray(results[i])) {
+                     self.data[t] = results[i].map(function(rec) {
+                         if (rec && rec.id) { rec._supabase_id = rec.id; rec._dirty = false; }
+                         return rec;
+                     });
+                 }
+             });
+             // Finance
+             var fin = await self._sbGetSingle('finance', 'id', 'main');
+             if (fin) {
+                 self.data.finance = { currentFunds: Number(fin.currentFunds) || 0, transactions: Array.isArray(fin.transactions) ? fin.transactions : [] };
+                 self._financeLoaded = true;
+             } else {
+                 self._financeLoaded = false;
+             }
+             // positionMappings
+             var pm = await self._sbGetSingle('position_mappings', 'id', 'main');
+             if (pm && pm.mappings && Object.keys(pm.mappings).length > 0) { 
+                 self.data.positionMappings = pm.mappings; 
+                 self._positionMappingsLoaded = true;
+             } else {
+                 self._positionMappingsLoaded = false;
+             }
+             // Normalize events
+             (self.data.events || []).forEach(function(e) {
+                 if (!e.attendees) e.attendees = [];
+                 if (!e.evaluations) e.evaluations = [];
+                 if (!e.evaluationLink) e.evaluationLink = '';
+                 if (!e.evaluationEnabled) e.evaluationEnabled = false;
+                 if (!e.qrCode) e.qrCode = '';
+                 if (!e.rsvps) e.rsvps = [];
+             });
+             console.log('[CSC] Loaded directly from Supabase:', tableKeys.map(function(t){return t+':'+((self.data[t]||[]).length)}).join(', '));
+             self._lastDataLoad = Date.now();
+         } catch(e) { 
+             console.error('[CSC] API load failed:', e); 
+         }
+     },
 
     setupDefaultData: function() {
         this.data = {
@@ -553,10 +578,35 @@ var App = {
         if (/[a-z]/.test(password) && /[A-Z]/.test(password)) score++;
         if (/\d/.test(password)) score++;
         if (/[^a-zA-Z0-9]/.test(password)) score++;
-        if (score <= 2) return { level: 'Weak', color: '#ef4444' };
-        if (score <= 3) return { level: 'Medium', color: '#f59e0b' };
-        return { level: 'Strong', color: '#10b981' };
-    },
+         if (score <= 2) return { level: 'Weak', color: '#ef4444' };
+         if (score <= 3) return { level: 'Medium', color: '#f59e0b' };
+         return { level: 'Strong', color: '#10b981' };
+     },
+
+     // Start periodic data refresh to sync with Supabase
+     _startDataRefresh: function() {
+         var self = this;
+         var refreshInterval = 5000; // 5 seconds
+         
+         // Store the interval ID so we can clear it if needed
+         this._dataRefreshInterval = setInterval(async function() {
+             // Only refresh if we're logged in
+             if (!self.currentUser) return;
+             
+             // Don't refresh too frequently - wait at least 10 seconds since last manual load
+             var timeSinceLastLoad = Date.now() - (self._lastDataLoad || 0);
+             if (timeSinceLastLoad < 10000) return;
+             
+             try {
+                 console.log('[CSC] Auto-refreshing data...');
+                 await self.loadDataFromAPI();
+                 self._lastDataLoad = Date.now();
+                 console.log('[CSC] Data auto-refreshed');
+             } catch(e) {
+                 console.warn('[CSC] Auto-refresh failed:', e);
+             }
+         }, refreshInterval);
+     },
 
     // ========== LANDING PAGE ==========
     renderLandingPage: function() {
@@ -1830,8 +1880,8 @@ this.attachPasswordToggle('register-password', 'toggle-password');
                 fullName += ' ' + self.registerData.lastName;
                 if (self.registerData.suffix) fullName += ' ' + self.registerData.suffix;
                 
-                var newUser = {
-                    id: Date.now(),
+                 var newUser = {
+                     id: crypto.randomUUID(),
                     name: fullName,
                     firstName: self.registerData.firstName,
                     middleName: self.registerData.middleName || '',
@@ -4630,8 +4680,8 @@ var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:
                 var content = document.getElementById('message-content').value;
                 
                 if (to && content) {
-                    self.data.messages.push({
-                        id: Date.now(),
+                     self.data.messages.push({
+                         id: crypto.randomUUID(),
                         from: user.email,
                         to: to,
                         content: content,
@@ -6195,8 +6245,8 @@ var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:
                     }
                 } else {
                     if (isSuperAdmin) {
-                        self.data.headlines.push({
-                            id: Date.now(),
+                         self.data.headlines.push({
+                             id: crypto.randomUUID(),
                             title: title,
                             content: content,
                             contentType: 'Featured',
@@ -6206,8 +6256,8 @@ var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:
                             requestedByEmail: self.currentUser.email
                         });
                     } else {
-                        self.data.postRequests.push({
-                            id: Date.now(),
+                         self.data.postRequests.push({
+                             id: crypto.randomUUID(),
                             title: title,
                             content: title,
                             contentType: 'Featured',
@@ -6233,8 +6283,8 @@ var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:
                 var reqId = parseInt(btn.dataset.id);
                 var req = self.data.postRequests.find(function(r) { return r.id === reqId; });
                 if (req) {
-                    self.data.headlines.push({
-                        id: Date.now(),
+                     self.data.headlines.push({
+                         id: crypto.randomUUID(),
                         title: req.title,
                         content: req.content,
                         contentType: req.contentType || 'Featured',
@@ -6848,8 +6898,8 @@ var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:
                 
                 // Save the QR code to data
                 if (!self.data.qrCodes) self.data.qrCodes = [];
-                self.data.qrCodes.push({
-                    id: Date.now(),
+                 self.data.qrCodes.push({
+                     id: crypto.randomUUID(),
                     code: code,
                     name: codeName,
                     eventId: eventId || null,
@@ -7573,8 +7623,8 @@ var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:
                     var announcementId = form.dataset.announcementId;
                     if (content && announcementId) {
                         if (!self.data.comments) self.data.comments = [];
-                        self.data.comments.push({
-                            id: Date.now(),
+                         self.data.comments.push({
+                             id: crypto.randomUUID(),
                             announcementId: parseInt(announcementId),
                             email: self.currentUser.email,
                             content: content,
@@ -7637,8 +7687,8 @@ var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:
                         var batch = self.currentUser.batch || '2025-2026';
                         var monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
                         var dateFolder = batch + '-' + monthNames[now.getMonth()] + '-' + now.getFullYear();
-                        self.data.suggestions.push({
-                            id: Date.now(),
+                         self.data.suggestions.push({
+                             id: crypto.randomUUID(),
                             author: anonymous && anonymous.checked ? 'Anonymous' : self.currentUser.name,
                             email: self.currentUser.email,
                             studentId: self.currentUser.studentId,
@@ -7676,8 +7726,8 @@ var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:
                             var batch = self.currentUser.batch || '2025-2026';
                             var monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
                             var dateFolder = batch + '-' + monthNames[now.getMonth()] + '-' + now.getFullYear();
-                            self.data.complaints.push({
-                                id: Date.now(),
+                             self.data.complaints.push({
+                                 id: crypto.randomUUID(),
                                 author: anonymous && anonymous.checked ? 'Anonymous' : self.currentUser.name,
                                 email: self.currentUser.email,
                                 content: input.value.trim(),
@@ -8118,8 +8168,8 @@ eventForm.addEventListener('submit', function(e) {
         if (annForm) {
             annForm.addEventListener('submit', function(e) {
                 e.preventDefault();
-                var newAnn = {
-                    id: Date.now(),
+                 var newAnn = {
+                     id: crypto.randomUUID(),
                     title: document.getElementById('announcement-title').value,
                     content: document.getElementById('announcement-content').value,
                     date: new Date().toISOString().split('T')[0],
@@ -8187,8 +8237,8 @@ eventForm.addEventListener('submit', function(e) {
                     alert('Please select a file');
                     return;
                 }
-                var newFile = {
-                    id: Date.now(),
+                 var newFile = {
+                     id: crypto.randomUUID(),
                     name: file.name,
                     category: document.getElementById('file-category').value,
                     type: file.name.split('.').pop().toLowerCase(),
@@ -8275,8 +8325,8 @@ eventForm.addEventListener('submit', function(e) {
                     alert('Please upload a media file');
                     return;
                 }
-                var newMedia = {
-                    id: Date.now(),
+                 var newMedia = {
+                     id: crypto.randomUUID(),
                     title: document.getElementById('media-title').value,
                     type: document.getElementById('media-type').value,
                     url: self.registerData.sidebarMedia,
@@ -8336,8 +8386,8 @@ eventForm.addEventListener('submit', function(e) {
                 var deadline = document.getElementById('poll-deadline').value || '2026-12-31';
                 var active = document.getElementById('poll-active') ? document.getElementById('poll-active').checked : true;
                 
-                var newPoll = {
-                    id: Date.now(),
+                 var newPoll = {
+                     id: crypto.randomUUID(),
                     question: question,
                     type: pollType || 'link',
                     date: new Date().toISOString().split('T')[0],
@@ -8725,8 +8775,8 @@ eventForm.addEventListener('submit', function(e) {
                     var reader = new FileReader();
                     reader.onload = function(evt) {
                         if (!self.data.reportFiles) self.data.reportFiles = [];
-                        self.data.reportFiles.push({
-                            id: Date.now(),
+                         self.data.reportFiles.push({
+                             id: crypto.randomUUID(),
                             name: name,
                             category: category,
                             date: new Date().toISOString().split('T')[0],
@@ -8816,8 +8866,8 @@ eventForm.addEventListener('submit', function(e) {
                     }
                     delete financeForm.dataset.editId;
                 } else {
-                    self.data.finance.transactions.push({
-                        id: Date.now(),
+                     self.data.finance.transactions.push({
+                         id: crypto.randomUUID(),
                         type: type,
                         eventId: eventId,
                         eventTitle: eventTitle,
@@ -8948,8 +8998,8 @@ eventForm.addEventListener('submit', function(e) {
                     return;
                 }
 
-                var newAdmin = {
-                    id: Date.now(),
+                 var newAdmin = {
+                     id: crypto.randomUUID(),
                     name: name,
                     studentId: studentId,
                     course: course,
