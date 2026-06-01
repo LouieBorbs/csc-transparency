@@ -191,12 +191,34 @@ var App = {
         otpCodes: {}
     },
 
-     init: function() {
-         var self = this;
-         try {
-             this.setupDefaultData(); // set safe in-memory defaults
-             this.loadPreferences();
-             this.setupEventListeners();
+    _tableMap: {
+        users: 'users',
+        events: 'events',
+        announcements: 'announcements',
+        files: 'files',
+        polls: 'polls',
+        suggestions: 'suggestions',
+        complaints: 'complaints',
+        notifications: 'notifications',
+        messages: 'messages',
+        comments: 'comments',
+        headlines: 'headlines',
+        postRequests: 'post_requests',
+        mediaContent: 'media_content',
+        qrCodes: 'qr_codes',
+        auditLogs: 'audit_logs',
+        activities: 'activities',
+        batches: 'batches',
+        organizations: 'organizations',
+        reportFiles: 'report_files'
+    },
+
+    init: function() {
+        var self = this;
+        try {
+            this._initEmptyData(); // set empty in-memory structure — do NOT sync to Supabase
+            this.loadPreferences();
+            this.setupEventListeners();
              if (this.darkMode) { document.body.classList.add('dark-mode'); }
              // Show spinner while loading from Supabase
              document.getElementById('app').innerHTML =
@@ -222,47 +244,47 @@ var App = {
 
      loadDataFromAPI: async function() {
          var self = this;
-         if (!window._CSC_SUPABASE_URL || !window._CSC_SUPABASE_KEY) {
-             console.warn('[CSC] Supabase credentials not set in index.html');
-             return;
-         }
          var tableKeys = ['users','events','announcements','files','polls','suggestions',
              'complaints','notifications','messages','comments','headlines',
              'postRequests','mediaContent','qrCodes','auditLogs','activities',
              'batches','organizations','reportFiles'];
          try {
-             // Clear memory cache to ensure fresh data
              this._memoryCache = {};
-             
+
              var results = await Promise.all(tableKeys.map(function(t) {
-                 var sbTable = self._tableMap[t] || t;
-                 return self._sbGet(sbTable, '', false);
+                 return fetch('/api/data/' + t)
+                     .then(function(r) { return r.json(); })
+                     .catch(function() { return { success: false, data: [] }; });
              }));
+
              tableKeys.forEach(function(t, i) {
-                 // Only update if we got data (could be empty array if table is truly empty)
-                 if (Array.isArray(results[i])) {
-                     self.data[t] = results[i].map(function(rec) {
+                 var result = results[i];
+                 if (result && result.success && Array.isArray(result.data)) {
+                     self.data[t] = result.data.map(function(rec) {
                          if (rec && rec.id) { rec._supabase_id = rec.id; rec._dirty = false; }
                          return rec;
                      });
                  }
              });
+
              // Finance
-             var fin = await self._sbGetSingle('finance', 'id', 'main');
-             if (fin) {
-                 self.data.finance = { currentFunds: Number(fin.currentFunds) || 0, transactions: Array.isArray(fin.transactions) ? fin.transactions : [] };
+             var finRes = await fetch('/api/data/finance').then(function(r) { return r.json(); }).catch(function() { return { success: false }; });
+             if (finRes.success && finRes.data) {
+                 self.data.finance = { currentFunds: Number(finRes.data.currentFunds) || 0, transactions: Array.isArray(finRes.data.transactions) ? finRes.data.transactions : [] };
                  self._financeLoaded = true;
              } else {
                  self._financeLoaded = false;
              }
+
              // positionMappings
-             var pm = await self._sbGetSingle('position_mappings', 'id', 'main');
-             if (pm && pm.mappings && Object.keys(pm.mappings).length > 0) { 
-                 self.data.positionMappings = pm.mappings; 
+             var pmRes = await fetch('/api/data/positionMappings').then(function(r) { return r.json(); }).catch(function() { return { success: false }; });
+             if (pmRes.success && pmRes.data && Object.keys(pmRes.data).length > 0) {
+                 self.data.positionMappings = pmRes.data;
                  self._positionMappingsLoaded = true;
              } else {
                  self._positionMappingsLoaded = false;
              }
+
              // Normalize events
              (self.data.events || []).forEach(function(e) {
                  if (!e.attendees) e.attendees = [];
@@ -272,12 +294,42 @@ var App = {
                  if (!e.qrCode) e.qrCode = '';
                  if (!e.rsvps) e.rsvps = [];
              });
-             console.log('[CSC] Loaded directly from Supabase:', tableKeys.map(function(t){return t+':'+((self.data[t]||[]).length)}).join(', '));
+
+             // Snapshot AFTER normalization: baseline for change detection in _syncToSupabase
+             self._apiSnapshotById = {};
+             tableKeys.forEach(function(t) {
+                 (self.data[t] || []).forEach(function(rec) {
+                     if (rec && rec._supabase_id) {
+                         var snap = Object.assign({}, rec);
+                         delete snap._supabase_id;
+                         delete snap._dirty;
+                         self._apiSnapshotById[t + ':' + rec._supabase_id] = JSON.stringify(snap);
+                     }
+                 });
+             });
+
+             console.log('[CSC] Loaded from API:', tableKeys.map(function(t){return t+':'+((self.data[t]||[]).length)}).join(', '));
              self._lastDataLoad = Date.now();
-         } catch(e) { 
-             console.error('[CSC] API load failed:', e); 
+         } catch(e) {
+             console.error('[CSC] API load failed:', e);
          }
      },
+
+    // Initialise empty data structure without triggering any Supabase sync.
+    // Real data is always loaded from Supabase in loadDataFromAPI().
+    _initEmptyData: function() {
+        this.data = {
+            users: [], events: [], announcements: [], files: [], polls: [],
+            suggestions: [], complaints: [], reports: [], auditLogs: [],
+            activities: [], headlines: [], messages: [], notifications: [],
+            mediaContent: [], batches: [], organizations: [], reportFiles: [],
+            comments: [], postRequests: [], qrCodes: [], otpCodes: {},
+            finance: { currentFunds: 0, transactions: [] },
+            positionMappings: {}
+        };
+        this._syncInProgress = false;
+        // Do NOT call saveData() here
+    },
 
     setupDefaultData: function() {
         this.data = {
@@ -339,68 +391,133 @@ var App = {
                 'Peace Officer': { committee: 'Executive', isHead: true },
                 'Public Information Officer': { committee: 'Public Relations', isHead: true },
                 'PIO': { committee: 'Public Relations', isHead: true },
+                'P.I.O': { committee: 'Public Relations', isHead: true },
                 'Representative - IT': { committee: 'Public Relations', isHead: false },
                 'Representative - HM': { committee: 'Public Relations', isHead: false },
                 'Representative - CPE': { committee: 'Public Relations', isHead: false },
                 'Representative - BA': { committee: 'Public Relations', isHead: false },
                 'Representative - BSAIS': { committee: 'Public Relations', isHead: false },
-                'Junior Councilor': { committee: 'Student Affairs', isHead: false },
-                'P.I.O': { committee: 'Public Relations', isHead: true },
-                'Business Manager': { committee: 'Finance', isHead: true }
+                'Junior Councilor': { committee: 'Student Affairs', isHead: false }
             }
-        };
-        this.saveData();
-    },
+         };
+     },
 
     saveData: function() { this._syncToSupabase(); },
 
     _syncToSupabase: async function() {
-        var self = this;
-        // Sync every array table: upsert each record by id
-        var tableKeys = ['users','events','announcements','files','polls','suggestions',
-            'complaints','notifications','messages','comments','headlines',
-            'postRequests','mediaContent','qrCodes','auditLogs','activities',
-            'batches','organizations','reportFiles'];
-        for (var i = 0; i < tableKeys.length; i++) {
-            var t = tableKeys[i];
-            var records = self.data[t];
-            if (!Array.isArray(records)) continue;
-            for (var j = 0; j < records.length; j++) {
-                var rec = records[j];
-                if (!rec) continue;
-                try {
-                    if (rec._supabase_id) {
-                        // existing record → PUT
-                        await fetch('/api/data/' + t + '/' + rec._supabase_id, {
-                            method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(rec)
-                        });
-                    } else {
-                        // new record → POST
-                        var res = await fetch('/api/data/' + t, {
-                            method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(rec)
-                        });
-                        var json = await res.json();
-                        if (json.success && json.data && json.data.id) {
-                            rec._supabase_id = json.data.id; // mark as saved
+        this._syncInProgress = true;
+        try {
+            var self = this;
+            var headers = { 'Content-Type': 'application/json' };
+
+            var tableKeys = ['users','events','announcements','files','polls','suggestions',
+                'complaints','notifications','messages','comments','headlines',
+                'postRequests','mediaContent','qrCodes','auditLogs','activities',
+                'batches','organizations','reportFiles'];
+
+            for (var i = 0; i < tableKeys.length; i++) {
+                var t = tableKeys[i];
+                var records = Array.isArray(self.data[t]) ? self.data[t] : [];
+
+                // ── STEP 1: DELETE records removed from the local array ────────────────
+                // Any snapshot key for this table whose ID is no longer in records = deleted
+                if (self._apiSnapshotById) {
+                    var currentIds = {};
+                    records.forEach(function(r) { if (r && r._supabase_id) currentIds[String(r._supabase_id)] = true; });
+
+                    var prefix = t + ':';
+                    Object.keys(self._apiSnapshotById).forEach(function(key) {
+                        if (key.indexOf(prefix) !== 0) return;
+                        var sid = key.slice(prefix.length);
+                        if (!currentIds[sid]) {
+                            // Was in snapshot, now gone from local array → DELETE
+                            fetch('/api/data/' + t + '/' + sid, { method: 'DELETE', headers: headers })
+                                .catch(function() {});
+                            delete self._apiSnapshotById[key];
+                            console.log('[CSC] Deleted', t, sid);
                         }
+                    });
+                }
+
+                if (records.length === 0) continue;
+
+                // ── STEP 2: CREATE new records / UPDATE changed records ───────────────
+                for (var j = 0; j < records.length; j++) {
+                    var rec = records[j];
+                    if (!rec) continue;
+
+                    var payload = Object.assign({}, rec);
+                    delete payload._supabase_id;
+                    delete payload._dirty;
+
+                    try {
+                        if (rec._supabase_id) {
+                            // Skip records identical to snapshot baseline
+                            var snapKey = t + ':' + rec._supabase_id;
+                            var payloadStr = JSON.stringify(payload);
+                            if (self._apiSnapshotById && self._apiSnapshotById[snapKey] === payloadStr) continue;
+
+                            var putRes = await fetch('/api/data/' + t + '/' + rec._supabase_id, {
+                                method: 'PUT',
+                                headers: headers,
+                                body: payloadStr
+                            });
+                            if (putRes.ok && self._apiSnapshotById) {
+                                // Update snapshot so subsequent saves don't re-PUT unchanged data
+                                self._apiSnapshotById[snapKey] = payloadStr;
+                            }
+                        } else {
+                            // New record — POST to API
+                            delete payload.id;
+                            var postRes = await fetch('/api/data/' + t, {
+                                method: 'POST',
+                                headers: headers,
+                                body: JSON.stringify(payload)
+                            });
+                            if (postRes.ok) {
+                                var postResult = await postRes.json();
+                                if (postResult.success && postResult.data && postResult.data.id) {
+                                    // Merge server response (includes server-assigned id, created_at, etc.)
+                                    Object.assign(rec, postResult.data);
+                                    rec._supabase_id = postResult.data.id;
+                                    // Snapshot the new record so it won't be re-PUT next time
+                                    if (self._apiSnapshotById) {
+                                        var newSnap = Object.assign({}, rec);
+                                        delete newSnap._supabase_id;
+                                        delete newSnap._dirty;
+                                        self._apiSnapshotById[t + ':' + rec._supabase_id] = JSON.stringify(newSnap);
+                                    }
+                                    console.log('[CSC] Created', t, rec.id);
+                                }
+                            }
+                        }
+                    } catch(e) {
+                        console.warn('[CSC] Sync error for', t, e);
                     }
-                } catch(e) { /* silent - data stays in memory */ }
+                }
             }
+
+            // ── Finance ───────────────────────────────────────────────────────────────
+            try {
+                var fin = self.data.finance || { currentFunds: 0, transactions: [] };
+                await fetch('/api/data/finance', {
+                    method: 'PUT',
+                    headers: headers,
+                    body: JSON.stringify({ currentFunds: fin.currentFunds, transactions: fin.transactions })
+                });
+            } catch(e) {}
+
+            // ── positionMappings ──────────────────────────────────────────────────────
+            try {
+                await fetch('/api/data/positionMappings', {
+                    method: 'PUT',
+                    headers: headers,
+                    body: JSON.stringify(self.data.positionMappings || {})
+                });
+            } catch(e) {}
+        } finally {
+            this._syncInProgress = false;
         }
-        // Finance
-        try {
-            await fetch('/api/data/finance', {
-                method: 'PUT', headers: {'Content-Type':'application/json'},
-                body: JSON.stringify(self.data.finance || { currentFunds: 0, transactions: [] })
-            });
-        } catch(e) {}
-        // positionMappings
-        try {
-            await fetch('/api/data/positionMappings', {
-                method: 'PUT', headers: {'Content-Type':'application/json'},
-                body: JSON.stringify(self.data.positionMappings || {})
-            });
-        } catch(e) {}
     },
 
     // Check if a position can be assigned based on organization limits
@@ -485,7 +602,22 @@ var App = {
 
     checkAuth: function() {
         try {
-            var user = this.currentUser; // localStorage removed - in-memory session only
+            var self = this;
+            // Restore session from sessionStorage
+            if (!this.currentUser) {
+                try {
+                    var savedId = sessionStorage.getItem('csc_user_id');
+                    if (savedId) {
+                        var found = (this.data.users || []).find(function(u) {
+                            return String(u._supabase_id) === savedId || String(u.id) === savedId;
+                        });
+                        if (found && found.active !== false) {
+                            this.currentUser = found;
+                        }
+                    }
+                } catch(e) {}
+            }
+            var user = this.currentUser;
             if (user) {
                 this.renderDashboard();
             } else {
@@ -583,30 +715,21 @@ var App = {
          return { level: 'Strong', color: '#10b981' };
      },
 
-     // Start periodic data refresh to sync with Supabase
-     _startDataRefresh: function() {
-         var self = this;
-         var refreshInterval = 5000; // 5 seconds
-         
-         // Store the interval ID so we can clear it if needed
-         this._dataRefreshInterval = setInterval(async function() {
-             // Only refresh if we're logged in
-             if (!self.currentUser) return;
-             
-             // Don't refresh too frequently - wait at least 10 seconds since last manual load
-             var timeSinceLastLoad = Date.now() - (self._lastDataLoad || 0);
-             if (timeSinceLastLoad < 10000) return;
-             
-             try {
-                 console.log('[CSC] Auto-refreshing data...');
-                 await self.loadDataFromAPI();
-                 self._lastDataLoad = Date.now();
-                 console.log('[CSC] Data auto-refreshed');
-             } catch(e) {
-                 console.warn('[CSC] Auto-refresh failed:', e);
-             }
-         }, refreshInterval);
-     },
+    _startDataRefresh: function() {
+        var self = this;
+        this._dataRefreshInterval = setInterval(async function() {
+            if (!self.currentUser) return;
+            if (self._syncInProgress) return; // don't refresh during a write
+            var timeSinceLastLoad = Date.now() - (self._lastDataLoad || 0);
+            if (timeSinceLastLoad < 30000) return; // 30 seconds between auto-refreshes
+            try {
+                await self.loadDataFromAPI();
+                self._lastDataLoad = Date.now();
+            } catch(e) {
+                console.warn('[CSC] Auto-refresh failed:', e);
+            }
+        }, 10000); // check every 10s
+    },
 
     // ========== LANDING PAGE ==========
     renderLandingPage: function() {
@@ -618,8 +741,8 @@ var App = {
         app.innerHTML = `
             <nav class="navbar">
                 <div class="navbar-left">
-                    <div class="navbar-logo"><i class="fas fa-university"></i></div>
-                    <span class="navbar-brand">CSC Transparency Website</span>
+                    <div class="navbar-logo"><img src="csc-logo.jpeg" alt="CSC Logo"></div>
+                    <span class="navbar-brand">CSC Transparency</span>
                 </div>
                 <div class="navbar-center">
                     <a href="#" class="nav-link">Home</a>
@@ -629,6 +752,7 @@ var App = {
                 <div class="navbar-right">
                     <button class="login-btn" id="login-toggle">Log in</button>
                     <div class="login-dropdown" id="login-dropdown">
+                        <div style="text-align:center;margin-bottom:10px;"><img src="csc-logo.jpeg" alt="CSC Logo" style="width:56px;height:56px;border-radius:50%;object-fit:cover;border:2px solid #e2e8f0;"></div>
                         <h3>Welcome Back</h3>
                         <div id="login-error" class="alert alert-error" style="display:none;"></div>
                         <form id="login-form">
@@ -663,7 +787,11 @@ var App = {
 
             <section class="hero-section">
                 <div class="hero-content">
-                    <h1 class="hero-title">Welcome to CSC Transparency Website</h1>
+                    <div class="hero-logo">
+                        <img src="csc-logo.jpeg" alt="CSC Logo">
+                    </div>
+                    <h1 class="hero-title">College Student Council</h1>
+                    <p style="font-size:20px;font-weight:600;color:#FFD700;margin-bottom:16px;letter-spacing:0.5px;">STI College Legazpi</p>
                     <p class="hero-subtitle">Your gateway to transparent governance, student representation, and institutional excellence. Access announcements, events, files, and more.</p>
                 </div>
             </section>
@@ -738,9 +866,9 @@ var App = {
                             user.adminRole = 'Admin';
                             self.saveData();
                         }
-                        self.currentUser = user;
-                        // localStorage removed - session stored in memory
-                        self.renderDashboard();
+                         self.currentUser = user;
+                         try { sessionStorage.setItem('csc_user_id', String(user.id)); } catch(e) {}
+                         self.renderDashboard();
                     } else {
                         var err = document.getElementById('login-error');
                         if (err) {
@@ -800,7 +928,7 @@ var App = {
                         '<div class="register-step">3</div>' +
                     '</div>' +
                     '<div class="auth-header">' +
-                        '<div class="auth-logo"><i class="fas fa-user-plus"></i></div>' +
+                        '<div class="auth-logo"><img src="csc-logo.jpeg" alt="CSC Logo"></div>' +
                         '<h1 class="auth-title">Create Account</h1>' +
                         '<p class="auth-subtitle">Step 1: Account Information</p>' +
                     '</div>' +
@@ -1548,7 +1676,7 @@ this.attachPasswordToggle('register-password', 'toggle-password');
                         '<div class="register-step">3</div>' +
                     '</div>' +
                     '<div class="auth-header">' +
-                        '<div class="auth-logo"><i class="fas fa-user-plus"></i></div>' +
+                        '<div class="auth-logo"><img src="csc-logo.jpeg" alt="CSC Logo"></div>' +
                         '<h1 class="auth-title">Create Account</h1>' +
                         '<p class="auth-subtitle">Step 2: Upload Documents</p>' +
                     '</div>' +
@@ -1699,7 +1827,7 @@ this.attachPasswordToggle('register-password', 'toggle-password');
             '<div class="auth-page">' +
                 '<div class="auth-card">' +
                     '<div class="auth-header">' +
-                        '<div class="auth-logo"><i class="fas fa-user-check"></i></div>' +
+                        '<div class="auth-logo"><img src="csc-logo.jpeg" alt="CSC Logo"></div>' +
                         '<h1 class="auth-title">Reactivate Account</h1>' +
                         '<p class="auth-subtitle">Please resubmit your school ID for reactivation</p>' +
                     '</div>' +
@@ -1809,7 +1937,7 @@ this.attachPasswordToggle('register-password', 'toggle-password');
                         '<div class="register-step active">3</div>' +
                     '</div>' +
                     '<div class="auth-header">' +
-                        '<div class="auth-logo"><i class="fas fa-envelope"></i></div>' +
+                        '<div class="auth-logo"><img src="csc-logo.jpeg" alt="CSC Logo"></div>' +
                         '<h1 class="auth-title">Verify Email</h1>' +
                         '<p class="auth-subtitle">Step 3: Enter the 6-digit code sent to your email</p>' +
                     '</div>' +
@@ -2108,7 +2236,7 @@ renderHeader: function(user) {
         return '<header class="dashboard-header">' +
             '<div class="header-left">' +
                 '<button class="mobile-menu-btn"><i class="fas fa-bars"></i></button>' +
-                '<div class="header-logo"><i class="fas fa-university"></i></div>' +
+                '<div class="header-logo"><img src="csc-logo.jpeg" alt="CSC Logo"></div>' +
                 '<h1 class="header-title">CSC Transparency</h1>' +
             '</div>' +
             '<div class="header-right">' +
@@ -3014,7 +3142,9 @@ renderAdminContent: function() {
         var qrCodesList = self.data.qrCodes || [];
         
         var html = '<div class="content-actions">' +
-            '<button class="btn btn-primary" id="generate-qr-btn"><i class="fas fa-plus"></i> Generate QR Code</button></div>' +
+            '<button class="btn btn-primary" id="generate-qr-btn"><i class="fas fa-plus"></i> Generate QR Code</button>' +
+            '<button class="btn btn-secondary" id="refresh-attendance-btn" style="margin-left:8px;"><i class="fas fa-sync-alt"></i> Refresh</button>' +
+            '</div>' +
             '<div id="qr-generator-panel" style="margin-top:16px;padding:16px;background:var(--bg-white);border-radius:var(--radius-md);border:1px solid var(--border-color);display:none;">' +
             '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">' +
             '<h3 style="margin:0;">Generate Attendance QR Code</h3>' +
@@ -5332,218 +5462,15 @@ var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:
             'Peace Officer': { committee: 'Executive', isHead: true },
             'Public Information Officer': { committee: 'Public Relations', isHead: true },
             'PIO': { committee: 'Public Relations', isHead: true },
+            'P.I.O': { committee: 'Public Relations', isHead: true },
             'Representative - IT': { committee: 'Public Relations', isHead: false },
             'Representative - HM': { committee: 'Public Relations', isHead: false },
             'Representative - CPE': { committee: 'Public Relations', isHead: false },
             'Representative - BA': { committee: 'Public Relations', isHead: false },
             'Representative - BSAIS': { committee: 'Public Relations', isHead: false },
-            'Junior Councilor': { committee: 'Student Affairs', isHead: false },
-            'P.I.O': { committee: 'Public Relations', isHead: true }
-        };
-        
-        var orgOptions = '<option value="">All Organizations</option>';
-        organizations.forEach(function(org) {
-            orgOptions += '<option value="' + org.name + '">' + org.name + '</option>';
-        });
-        
-        if (searchQuery) {
-            searchQuery = searchQuery.toLowerCase();
-            students = students.filter(function(s) {
-                return (s.name && s.name.toLowerCase().includes(searchQuery)) ||
-                       (s.studentId && s.studentId.toLowerCase().includes(searchQuery));
-            });
-        }
-        
-        var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">' +
-            '<input type="text" class="form-input" id="org-search-input" placeholder="Search by name or ID..." style="width:240px;">' +
-            '<button class="btn btn-primary" id="add-org-member-btn"><i class="fas fa-plus"></i> Add Member</button>' +
-            '<div><span style="font-size:12px;font-weight:600;margin-bottom:4px;display:block;color:var(--text-light);">Term</span>' +
-            '<select class="form-input" id="org-term-select" style="width:140px;">' + termOptions + '</select></div>' +
-            '<div><span style="font-size:12px;font-weight:600;margin-bottom:4px;display:block;color:var(--text-light);">Organization</span>' +
-            '<select class="form-input" id="org-filter-select" style="width:180px;">' + orgOptions + '</select></div>' +
-            '</div>';
-        
-        var filteredStudents = selectedOrg ? students.filter(function(s) { return s.organization && s.organization.name === selectedOrg; }) : students;
-        
-        html += '<div style="margin-top:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">' +
-            '<div style="display:flex;align-items:center;gap:8px;">' +
-            '<h3 style="font-size:16px;margin:0;">Hierarchy Chart' + (selectedTerm ? ' - ' + selectedTerm : '') + (selectedOrg ? ' - ' + selectedOrg : '') + '</h3>' +
-            '</div>' +
-            '<div style="display:flex;gap:8px;">' +
-            '<button class="btn btn-secondary btn-sm" id="manage-org-members-btn"><i class="fas fa-edit"></i> Manage</button>' +
-            '<button class="btn btn-secondary btn-sm" id="export-org-btn"><i class="fas fa-download"></i> Export</button>' +
-            '</div>' +
-            '</div>';
-        
-        if (selectedOrg) {
-            var orgStudents = filteredStudents;
-            var heads = orgStudents.filter(function(s) { return s.organization && s.organization.roleType === 'Head'; });
-            var members = orgStudents.filter(function(s) { return !s.organization || s.organization.roleType !== 'Head'; });
-            
-            var committeeGroups = {};
-            heads.forEach(function(h) {
-                var committee = h.organization && h.organization.committee ? h.organization.committee : 'Other';
-                if (!committeeGroups[committee]) committeeGroups[committee] = { head: null, memberList: [] };
-                committeeGroups[committee].head = h;
-            });
-            
-            members.forEach(function(m) {
-                var committee = m.organization && m.organization.committee ? m.organization.committee : 'Other';
-                if (!committeeGroups[committee]) committeeGroups[committee] = { head: null, memberList: [] };
-                committeeGroups[committee].memberList.push(m);
-            });
-            
-            var committeeNames = Object.keys(committeeGroups).sort();
-            
-            var uniqueBlocks = {};
-            orgStudents.forEach(function(s) { if (s.block) uniqueBlocks[s.block] = true; });
-            var blockInfo = Object.keys(uniqueBlocks).sort().join(', ') || '-';
-            var uniqueSections = {};
-            orgStudents.forEach(function(s) { if (s.section) uniqueSections[s.section] = true; });
-            var sectionInfo = Object.keys(uniqueSections).sort().join(', ') || '-';
-            
-            html += '<div style="background:var(--bg-white);border:1px solid var(--border-color);border-radius:var(--radius-md);padding:12px 16px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">' +
-                '<div style="font-size:14px;font-weight:600;"><strong>' + selectedOrg + '</strong></div>' +
-                '<div style="display:flex;gap:16px;font-size:13px;color:var(--text-light);">' +
-                '<div>Block: <strong style="color:var(--text-dark);">' + blockInfo + '</strong></div>' +
-                '<div>Section: <strong style="color:var(--text-dark);">' + sectionInfo + '</strong></div>' +
-                '</div>' +
-                '</div>' +
-                '<div class="table-container" style="overflow-x:auto;">' +
-                '<table class="table" style="min-width:900px;">' +
-                '<thead><tr>' +
-                '<th style="width:120px;">Committee</th>' +
-                '<th style="width:100px;">Role</th>' +
-                '<th style="width:180px;">Name</th>' +
-                '<th style="width:130px;">Position</th>' +
-                '<th style="width:80px;">Course</th>' +
-                '<th style="width:60px;">Block</th>' +
-                '<th style="width:60px;">Section</th>' +
-                '</tr></thead><tbody>';
-            
-            committeeNames.forEach(function(committee) {
-                var group = committeeGroups[committee];
-                var firstCommittee = true;
-                
-                if (group.head) {
-                    var profilePicHtml = group.head.profilePic ? 
-                        '<img src="' + group.head.profilePic + '" style="width:28px;height:28px;border-radius:50%;object-fit:cover;">' :
-                        '<div style="width:28px;height:28px;border-radius:50%;background:var(--primary-color);color:white;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:12px;">' + (group.head.name ? group.head.name.charAt(0).toUpperCase() : '?') + '</div>';
-                    
-                    html += '<tr>' +
-                        '<td style="font-weight:600;background:' + (firstCommittee ? '#e8f5e9' : 'transparent') + ';">' + (firstCommittee ? committee + ' Committee' : '') + '</td>' +
-                        '<td><span style="background:#4caf50;color:white;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;">HEAD</span></td>' +
-                        '<td><div style="display:flex;align-items:center;gap:8px;">' + profilePicHtml + '<span>' + (group.head.name || 'N/A') + '</span></div></td>' +
-                        '<td>' + (group.head.organization && group.head.organization.position ? group.head.organization.position : 'Member') + '</td>' +
-                        '<td>' + (group.head.course || '-') + '</td>' +
-                        '<td>' + (group.head.block || '-') + '</td>' +
-                        '<td>' + (group.head.section || '-') + '</td>' +
-                        '</tr>';
-                    firstCommittee = false;
-                }
-                
-                group.memberList.forEach(function(m) {
-                    var memberPicHtml = m.profilePic ? 
-                        '<img src="' + m.profilePic + '" style="width:28px;height:28px;border-radius:50%;object-fit:cover;">' :
-                        '<div style="width:28px;height:28px;border-radius:50%;background:var(--primary-color);color:white;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:12px;">' + (m.name ? m.name.charAt(0).toUpperCase() : '?') + '</div>';
-                    
-                    html += '<tr>' +
-                        '<td style="font-weight:600;">' + (firstCommittee ? committee + ' Committee' : '') + '</td>' +
-                        '<td><span style="background:var(--bg-color);color:var(--text-light);padding:2px 8px;border-radius:4px;font-size:11px;">Member</span></td>' +
-                        '<td><div style="display:flex;align-items:center;gap:8px;">' + memberPicHtml + '<span>' + (m.name || 'N/A') + '</span></div></td>' +
-                        '<td>' + (m.organization && m.organization.position ? m.organization.position : 'Member') + '</td>' +
-                        '<td>' + (m.course || '-') + '</td>' +
-                        '<td>' + (m.block || '-') + '</td>' +
-                        '<td>' + (m.section || '-') + '</td>' +
-                        '</tr>';
-                    firstCommittee = false;
-                });
-            });
-            
-            html += '</tbody></table></div>';
-            
-            if (Object.keys(committeeGroups).length === 0) {
-                html += '<div class="empty-state"><div class="empty-icon"><i class="fas fa-sitemap"></i></div>' +
-                    '<h3 class="empty-title">No hierarchy data</h3><p class="empty-text">Add members to see hierarchy chart</p></div>';
-            }
-        } else {
-            html += '<div style="padding:40px;text-align:center;background:var(--bg-white);border-radius:8px;border:1px solid var(--border-color);">' +
-                '<i class="fas fa-sitemap" style="font-size:48px;color:var(--text-light);margin-bottom:16px;display:block;"></i>' +
-                '<p style="color:var(--text-light);">Select an organization above to view its hierarchy chart</p></div>';
-        }
-        
-        html += '</div>';
-        
-        var orgSelectOptions = '<option value="">Select Organization</option>';
-        organizations.forEach(function(org) {
-            orgSelectOptions += '<option value="' + org.name + '">' + org.name + '</option>';
-        });
-        
-        html += '<div id="add-org-member-modal" class="modal" style="display:none;">' +
-            '<div class="modal-content" style="max-width:500px;">' +
-            '<div class="modal-header"><h3>Add Organization Member</h3><button class="modal-close" id="close-add-org-modal">&times;</button></div>' +
-            '<div class="modal-body">' +
-            '<form id="add-org-form">' +
-            '<div class="form-group"><label class="form-label">Search Student *</label>' +
-            '<input type="text" class="form-input" id="org-student-search" placeholder="Type to search student by name or ID..." required autocomplete="off">' +
-            '<div id="org-search-results" style="max-height:200px;overflow-y:auto;border:1px solid var(--border-color);border-radius:4px;margin-top:4px;display:none;"></div>' +
-            '<input type="hidden" id="org-student-id"></div>' +
-            '<div id="selected-student-info" style="display:none;padding:12px;background:var(--bg-color);border-radius:8px;margin-bottom:12px;">' +
-            '<strong>Selected:</strong> <span id="selected-student-name"></span></div>' +
-            '<div class="form-group"><label class="form-label">Term/Batch *</label>' +
-            '<select class="form-input" id="org-term" required>' +
-            '<option value="2025-2026">2025-2026</option>' +
-            '<option value="2024-2025">2024-2025</option>' +
-            '<option value="2023-2024">2023-2024</option></select></div>' +
-            '<div class="form-group"><label class="form-label">Organization Name *</label>' +
-            '<select class="form-input" id="org-name" required>' + orgSelectOptions + '</select></div>' +
-            '<div class="form-group"><label class="form-label">Position *</label>' +
-            '<select class="form-input" id="org-position" required>' +
-            '<option value="">Select Position</option>' +
-            '<option value="President">President</option>' +
-            '<option value="Vice President">Vice President</option>' +
-            '<option value="Secretary">Secretary</option>' +
-            '<option value="Treasurer">Treasurer</option>' +
-            '<option value="Auditor">Auditor</option>' +
-            '<option value="Business Manager">Business Manager</option>' +
-            '<option value="Peace Officer">Peace Officer</option>' +
-            '<option value="Public Information Officer">Public Information Officer (PIO)</option>' +
-            '<option value="Representative - IT">Representative - IT</option>' +
-            '<option value="Representative - HM">Representative - HM</option>' +
-            '<option value="Representative - CPE">Representative - CPE</option>' +
-            '<option value="Representative - BA">Representative - BA</option>' +
-            '<option value="Representative - BSAIS">Representative - BSAIS</option>' +
-            '<option value="Junior Councilor">Junior Councilor</option>' +
-            '</select></div>' +
-            '<div class="form-group"><label class="form-label">Committee</label>' +
-            '<select class="form-input" id="org-committee">' +
-            '<option value="">Select Committee</option>' +
-            '<option value="Executive">Executive</option>' +
-            '<option value="Finance">Finance</option>' +
-            '<option value="Public Relations">Public Relations</option>' +
-            '<option value="Secretariate">Secretariate</option>' +
-            '<option value="Documentation">Documentation</option>' +
-            '<option value="Events">Events</option>' +
-            '<option value="Technical">Technical</option>' +
-            '<option value="Hospitality">Hospitality</option>' +
-            '<option value="Student Affairs">Student Affairs</option>' +
-            '</select></div>' +
-            '<div class="form-group"><label class="form-label">Role Type *</label>' +
-            '<select class="form-input" id="org-role-type" required>' +
-            '<option value="">Select Role Type</option>' +
-            '<option value="Head">Head</option>' +
-            '<option value="Member">Member</option>' +
-            '</select></div>' +
-            '<div class="form-group"><label class="form-label">Status</label>' +
-            '<select class="form-input" id="org-status">' +
-            '<option value="Active">Active</option>' +
-            '<option value="Inactive">Inactive</option>' +
-            '</select></div>' +
-            '<button type="submit" class="btn btn-primary" style="width:100%;margin-top:16px;">Add to Organization</button>' +
-            '</form></div></div></div>';
-        
-        return html;
-    },
+             'Junior Councilor': { committee: 'Student Affairs', isHead: false }
+         };
+     },
 
     editAdmin: function(id) {
         var self = this;
@@ -6134,7 +6061,7 @@ var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:
         });
 
         document.querySelector('[data-action="logout"]') && document.querySelector('[data-action="logout"]').addEventListener('click', function() {
-            // localStorage removed
+            try { sessionStorage.removeItem('csc_user_id'); } catch(e) {}
             self.currentUser = null;
             self.renderLandingPage();
         });
@@ -6848,6 +6775,17 @@ var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:
             });
         });
 
+        // Refresh attendance data from Supabase
+        var refreshAttendanceBtn = document.getElementById('refresh-attendance-btn');
+        if (refreshAttendanceBtn) {
+            refreshAttendanceBtn.addEventListener('click', async function() {
+                refreshAttendanceBtn.disabled = true;
+                refreshAttendanceBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Refreshing...';
+                await self.loadDataFromAPI();
+                self.renderAdminAttendance();
+            });
+        }
+
         // Generate QR Code buttons in Attendance Tab
         var generateQrBtn = document.getElementById('generate-qr-btn');
         if (generateQrBtn) {
@@ -7451,7 +7389,38 @@ var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:
                                   .then(function(res) { return res.json(); })
                                   .then(function(data) {
                                       if (data.success) {
-                                          alert('Attendance marked successfully! ' + (data.message || ''));
+                                          // Parse session_id so we can sync attendees into the local qrCodes record
+                                          var sessionId = null;
+                                          try {
+                                              var parsedQr = JSON.parse(decodedText);
+                                              sessionId = parsedQr.sessionId || null;
+                                          } catch(e) {
+                                              var raw = String(decodedText);
+                                              if (raw.startsWith('CSC:')) sessionId = raw.substring(4).split('|')[0];
+                                          }
+                                          if (sessionId) {
+                                              var qrRec = (self.data.qrCodes || []).find(function(q) { return q.code === sessionId; });
+                                              if (qrRec) {
+                                                  if (!qrRec.attendees) qrRec.attendees = [];
+                                                  var already = qrRec.attendees.some(function(a) {
+                                                      return a.email === self.currentUser.email ||
+                                                             a.studentId === self.currentUser.studentId;
+                                                  });
+                                                  if (!already) {
+                                                      qrRec.attendees.push({
+                                                          name: self.currentUser.name,
+                                                          email: self.currentUser.email,
+                                                          studentId: self.currentUser.studentId || '',
+                                                          course: self.currentUser.course || '',
+                                                          section: self.currentUser.section || '',
+                                                          date: new Date().toISOString().split('T')[0],
+                                                          time: new Date().toTimeString().split(' ')[0]
+                                                      });
+                                                      self.saveData();
+                                                  }
+                                              }
+                                          }
+                                          alert('Attendance marked successfully!');
                                       } else {
                                           alert('Error: ' + (data.message || 'Failed to mark attendance'));
                                       }
