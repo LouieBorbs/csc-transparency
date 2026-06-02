@@ -798,6 +798,29 @@ var App = {
                 </div>
             </section>
 
+            <section class="home-stats-section">
+                <div class="home-stats-inner">
+                    <div class="home-stats-grid">
+                        <div class="home-stat-item">
+                            <span class="home-stat-number">${self.data.users ? self.data.users.filter(function(u){ return u.role === 'student'; }).length : 0}+</span>
+                            <span class="home-stat-label">Registered Students</span>
+                        </div>
+                        <div class="home-stat-item">
+                            <span class="home-stat-number">${self.data.events ? self.data.events.length : 0}+</span>
+                            <span class="home-stat-label">Events Organized</span>
+                        </div>
+                        <div class="home-stat-item">
+                            <span class="home-stat-number">${self.data.announcements ? self.data.announcements.length : 0}+</span>
+                            <span class="home-stat-label">Announcements Posted</span>
+                        </div>
+                        <div class="home-stat-item">
+                            <span class="home-stat-number">${self.data.files ? self.data.files.length : 0}+</span>
+                            <span class="home-stat-label">Files Shared</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             <section class="home-overview-section">
                 <div class="home-section-inner">
                     <h2 class="home-section-title">What Students Can See &amp; Do</h2>
@@ -849,6 +872,31 @@ var App = {
                 </div>
             </section>
 
+            <section class="home-mission-section">
+                <div class="home-section-inner">
+                    <span class="home-mission-badge">Our Mission</span>
+                    <h2 class="home-mission-title">Committed to Transparent Governance</h2>
+                    <p class="home-mission-text">The CSC - STI College Legazpi is dedicated to serving the student body through responsible leadership, open communication, and active engagement. This website ensures every student has full visibility into the council's activities, decisions, and finances.</p>
+                    <div class="home-mission-values">
+                        <div class="home-mission-value">
+                            <div class="home-mission-value-icon"><i class="fas fa-eye"></i></div>
+                            <div class="home-mission-value-title">Transparency</div>
+                            <p class="home-mission-value-text">Every financial report, announcement, and council decision is made openly accessible to all registered students.</p>
+                        </div>
+                        <div class="home-mission-value">
+                            <div class="home-mission-value-icon"><i class="fas fa-handshake"></i></div>
+                            <div class="home-mission-value-title">Accountability</div>
+                            <p class="home-mission-value-text">The council holds itself responsible to the student body it represents, ensuring trust and integrity in all actions.</p>
+                        </div>
+                        <div class="home-mission-value">
+                            <div class="home-mission-value-icon"><i class="fas fa-heart"></i></div>
+                            <div class="home-mission-value-title">Student-Centered</div>
+                            <p class="home-mission-value-text">Every initiative, event, and program is designed with the students' best interest, growth, and welfare in mind.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             <section class="home-steps-section">
                 <div class="home-section-inner">
                     <h2 class="home-section-title" style="color:#fff;">How to Get Started</h2>
@@ -872,7 +920,84 @@ var App = {
                     </div>
                 </div>
             </section>
+
+            <section class="home-cta-section">
+                <div class="home-section-inner">
+                    <h2 class="home-cta-title">Be Part of the Community</h2>
+                    <p class="home-cta-text">Join STI Legazpi students who stay informed, attend events, and engage with their college council. Registration is free — sign up and wait for approval.</p>
+                    <div class="home-cta-buttons">
+                        <button class="home-cta-btn-primary" id="cta-register-btn">Register Now</button>
+                        <button class="home-cta-btn-secondary" id="cta-login-btn">Log In</button>
+                    </div>
+                </div>
+            </section>
+
+            <footer class="site-footer">
+                <div class="footer-inner">
+                    <div>
+                        <div class="footer-brand-logo"><img src="csc-logo.jpeg" alt="CSC Logo"></div>
+                        <div class="footer-brand-name">CSC Transparency Website</div>
+                        <div class="footer-brand-sub">CSC - STI College Legazpi</div>
+                        <p class="footer-brand-desc">Your official gateway to transparent governance, student representation, and institutional excellence at STI College Legazpi.</p>
+                    </div>
+                    <div>
+                        <div class="footer-col-title">Quick Links</div>
+                        <ul class="footer-links">
+                            <li><a href="#">Home</a></li>
+                            <li><a href="#">About</a></li>
+                            <li><a href="#">Contact Us</a></li>
+                            <li><a href="#">FAQ</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <div class="footer-col-title">Follow Us</div>
+                        <div class="footer-socials">
+                            <a href="https://web.facebook.com/STICollegeLegazpiCollegeStudentCouncil" target="_blank" class="footer-social-link" title="Facebook">
+                                <i class="fab fa-facebook-f"></i>
+                            </a>
+                            <a href="https://www.tiktok.com/@csc_stilegazpi" target="_blank" class="footer-social-link" title="TikTok">
+                                <i class="fab fa-tiktok"></i>
+                            </a>
+                        </div>
+                        <p class="footer-social-desc">Stay updated with the latest CSC activities and announcements on our social media pages.</p>
+                    </div>
+                    <div>
+                        <div class="footer-col-title">Contact &amp; Location</div>
+                        <div class="footer-contact-item">
+                            <i class="fas fa-map-marker-alt footer-contact-icon"></i>
+                            <span class="footer-contact-text">Barangay 20 Cabangan East, Legazpi City, Albay, Philippines 4500</span>
+                        </div>
+                        <div class="footer-contact-item">
+                            <i class="fas fa-university footer-contact-icon"></i>
+                            <span class="footer-contact-text">STI College Legazpi — Committed to quality education and student welfare.</span>
+                        </div>
+                        <div class="footer-contact-item">
+                            <i class="fas fa-shield-alt footer-contact-icon"></i>
+                            <span class="footer-contact-text">All student data is handled securely and with strict confidentiality.</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="footer-bottom">
+                    <span class="footer-bottom-text">&copy; 2026 CSC - STI College Legazpi. All rights reserved.</span>
+                    <span class="footer-bottom-badge">Built with Transparency in Mind</span>
+                </div>
+            </footer>
         `;
+
+        // CTA buttons
+        var ctaRegisterBtn = document.getElementById('cta-register-btn');
+        if (ctaRegisterBtn) {
+            ctaRegisterBtn.addEventListener('click', function() {
+                self.renderRegister();
+            });
+        }
+        var ctaLoginBtn = document.getElementById('cta-login-btn');
+        if (ctaLoginBtn) {
+            ctaLoginBtn.addEventListener('click', function() {
+                var dropdown = document.getElementById('login-dropdown');
+                if (dropdown) { dropdown.classList.toggle('show'); window.scrollTo({top: 0, behavior: 'smooth'}); }
+            });
+        }
 
         // Login form submission
         var loginForm = document.getElementById('login-form');
