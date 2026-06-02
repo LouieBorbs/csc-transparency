@@ -797,6 +797,81 @@ var App = {
                     <p class="hero-subtitle">Your gateway to transparent governance, student representation, and institutional excellence. Access announcements, events, files, and more.</p>
                 </div>
             </section>
+
+            <section class="home-overview-section">
+                <div class="home-section-inner">
+                    <h2 class="home-section-title">What Students Can See &amp; Do</h2>
+                    <p class="home-section-desc">Everything you need to stay informed, engaged, and connected with the College Student Council — all in one place.</p>
+                    <div class="home-features-grid">
+                        <div class="home-feature-card">
+                            <div class="home-feature-icon" style="background:#e8f0fe;">
+                                <i class="fas fa-bullhorn" style="color:#1a3a8f;font-size:24px;"></i>
+                            </div>
+                            <h3 class="home-feature-title">Announcements</h3>
+                            <p class="home-feature-desc">Read official CSC news, advisories, and important updates posted by the council in real time.</p>
+                        </div>
+                        <div class="home-feature-card">
+                            <div class="home-feature-icon" style="background:#fef3c7;">
+                                <i class="fas fa-calendar-alt" style="color:#d97706;font-size:24px;"></i>
+                            </div>
+                            <h3 class="home-feature-title">Events</h3>
+                            <p class="home-feature-desc">Browse upcoming and past CSC events, view schedules and details, and check your participation history.</p>
+                        </div>
+                        <div class="home-feature-card">
+                            <div class="home-feature-icon" style="background:#d1fae5;">
+                                <i class="fas fa-folder-open" style="color:#059669;font-size:24px;"></i>
+                            </div>
+                            <h3 class="home-feature-title">Files &amp; Documents</h3>
+                            <p class="home-feature-desc">Access and download official CSC files, forms, and shared documents whenever you need them.</p>
+                        </div>
+                        <div class="home-feature-card">
+                            <div class="home-feature-icon" style="background:#fce7f3;">
+                                <i class="fas fa-coins" style="color:#db2777;font-size:24px;"></i>
+                            </div>
+                            <h3 class="home-feature-title">Budget &amp; Finance</h3>
+                            <p class="home-feature-desc">View transparent financial reports that show exactly how CSC funds are collected and spent.</p>
+                        </div>
+                        <div class="home-feature-card">
+                            <div class="home-feature-icon" style="background:#ede9fe;">
+                                <i class="fas fa-clipboard-check" style="color:#7c3aed;font-size:24px;"></i>
+                            </div>
+                            <h3 class="home-feature-title">Attendance</h3>
+                            <p class="home-feature-desc">Track your event attendance records and monitor your participation in CSC activities.</p>
+                        </div>
+                        <div class="home-feature-card">
+                            <div class="home-feature-icon" style="background:#ffedd5;">
+                                <i class="fas fa-users" style="color:#ea580c;font-size:24px;"></i>
+                            </div>
+                            <h3 class="home-feature-title">Student Directory</h3>
+                            <p class="home-feature-desc">Get to know the CSC officers, committees, and fellow student members of the organization.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="home-steps-section">
+                <div class="home-section-inner">
+                    <h2 class="home-section-title" style="color:#fff;">How to Get Started</h2>
+                    <p class="home-section-desc" style="color:rgba(255,255,255,0.8);">Getting access to the CSC Transparency Website is quick and easy.</p>
+                    <div class="home-steps-grid">
+                        <div class="home-step-card">
+                            <div class="home-step-number">1</div>
+                            <h3 class="home-step-title">Register</h3>
+                            <p class="home-step-desc">Create your student account using your school credentials. Submit your registration and wait for admin approval.</p>
+                        </div>
+                        <div class="home-step-card">
+                            <div class="home-step-number">2</div>
+                            <h3 class="home-step-title">Log In</h3>
+                            <p class="home-step-desc">Once your account is approved, log in using your email and password to access your personal student dashboard.</p>
+                        </div>
+                        <div class="home-step-card">
+                            <div class="home-step-number">3</div>
+                            <h3 class="home-step-title">Explore</h3>
+                            <p class="home-step-desc">Browse announcements, check events, view files, monitor your attendance, and stay connected with the CSC.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
         `;
 
         // Login form submission

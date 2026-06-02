@@ -569,6 +569,117 @@ body {
     }
 }
 
+/* Home Overview & Steps Sections */
+.home-overview-section {
+    background: #f8fafc;
+    padding: 80px 24px;
+}
+.home-steps-section {
+    background: linear-gradient(160deg, #1a3a8f 0%, #0d2057 100%);
+    padding: 80px 24px;
+}
+.home-section-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    text-align: center;
+}
+.home-section-title {
+    font-size: 34px;
+    font-weight: 800;
+    color: #1a3a8f;
+    margin-bottom: 12px;
+}
+.home-section-desc {
+    font-size: 17px;
+    color: #64748b;
+    max-width: 640px;
+    margin: 0 auto 48px;
+    line-height: 1.65;
+}
+.home-features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+}
+.home-feature-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 32px 24px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+    text-align: left;
+    transition: transform 0.18s, box-shadow 0.18s;
+}
+.home-feature-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 28px rgba(26,58,143,0.13);
+}
+.home-feature-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 18px;
+}
+.home-feature-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 8px;
+}
+.home-feature-desc {
+    font-size: 14px;
+    color: #64748b;
+    line-height: 1.6;
+}
+.home-steps-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin-top: 12px;
+}
+.home-step-card {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 14px;
+    padding: 36px 24px;
+    text-align: center;
+}
+.home-step-number {
+    width: 52px;
+    height: 52px;
+    background: #FFD700;
+    color: #1a3a8f;
+    font-size: 22px;
+    font-weight: 800;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 18px;
+}
+.home-step-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 10px;
+}
+.home-step-desc {
+    font-size: 14px;
+    color: rgba(255,255,255,0.8);
+    line-height: 1.65;
+}
+@media (max-width: 768px) {
+    .home-features-grid, .home-steps-grid { grid-template-columns: 1fr; }
+    .home-section-title { font-size: 26px; }
+    .home-overview-section, .home-steps-section { padding: 60px 20px; }
+}
+@media (min-width: 769px) and (max-width: 1024px) {
+    .home-features-grid { grid-template-columns: repeat(2, 1fr); }
+    .home-steps-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
 /* Mobile Menu Overlay */
 .mobile-menu-overlay {
     display: none;
