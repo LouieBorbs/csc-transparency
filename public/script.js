@@ -747,6 +747,7 @@ var App = {
                 <div class="navbar-center">
                     <a href="#" class="nav-link">Home</a>
                     <a href="#" class="nav-link">About</a>
+                    <a href="#" class="nav-link">Contact Us</a>
                     <a href="#" class="nav-link">FAQ</a>
                 </div>
                 <div class="navbar-right">
@@ -779,6 +780,7 @@ var App = {
             <div class="mobile-menu" id="mobile-menu">
                 <a href="#" class="mobile-nav-link">Home</a>
                 <a href="#" class="mobile-nav-link">About</a>
+                <a href="#" class="mobile-nav-link">Contact Us</a>
                 <a href="#" class="mobile-nav-link">FAQ</a>
                 <button class="mobile-login-btn login-btn" id="mobile-login-btn">Log in</button>
             </div>
@@ -790,8 +792,8 @@ var App = {
                     <div class="hero-logo">
                         <img src="csc-logo.jpeg" alt="CSC Logo">
                     </div>
-                    <h1 class="hero-title">College Student Council</h1>
-                    <p style="font-size:20px;font-weight:600;color:#FFD700;margin-bottom:16px;letter-spacing:0.5px;">STI College Legazpi</p>
+                    <h1 class="hero-title">CSC Transparency Website</h1>
+                    <p style="font-size:20px;font-weight:600;color:#FFD700;margin-bottom:16px;letter-spacing:0.5px;">CSC - STI College Legazpi</p>
                     <p class="hero-subtitle">Your gateway to transparent governance, student representation, and institutional excellence. Access announcements, events, files, and more.</p>
                 </div>
             </section>
