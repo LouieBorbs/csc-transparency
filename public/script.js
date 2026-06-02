@@ -907,17 +907,23 @@ var App = {
                     <h2 class="home-section-title" style="color:#fff;">How to Get Started</h2>
                     <p class="home-section-desc" style="color:rgba(255,255,255,0.8);">Getting access to the CSC Transparency Website is quick and easy.</p>
                     <div class="home-steps-grid">
-                        <div class="home-step-card">
+                        <div class="home-step-card home-step-card-1">
                             <div class="home-step-number">1</div>
                             <h3 class="home-step-title">Register</h3>
                             <p class="home-step-desc">Create your student account using your school credentials. Submit your registration and wait for admin approval.</p>
                         </div>
-                        <div class="home-step-card">
+                        <div class="step-electric-connector step-connector-1">
+                            <i class="fas fa-bolt"></i>
+                        </div>
+                        <div class="home-step-card home-step-card-2">
                             <div class="home-step-number">2</div>
                             <h3 class="home-step-title">Log In</h3>
                             <p class="home-step-desc">Once your account is approved, log in using your email and password to access your personal student dashboard.</p>
                         </div>
-                        <div class="home-step-card">
+                        <div class="step-electric-connector step-connector-2">
+                            <i class="fas fa-bolt"></i>
+                        </div>
+                        <div class="home-step-card home-step-card-3">
                             <div class="home-step-number">3</div>
                             <h3 class="home-step-title">Explore</h3>
                             <p class="home-step-desc">Browse announcements, check events, view files, monitor your attendance, and stay connected with the CSC.</p>

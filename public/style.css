@@ -698,9 +698,10 @@ body {
 }
 .home-steps-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 24px;
+    grid-template-columns: 1fr 52px 1fr 52px 1fr;
+    gap: 0 8px;
     margin-top: 12px;
+    align-items: center;
 }
 .home-step-card {
     background: rgba(255,255,255,0.1);
@@ -733,14 +734,118 @@ body {
     color: rgba(255,255,255,0.8);
     line-height: 1.65;
 }
+
+/* ── Electric connector bolt ── */
+.step-electric-connector {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    color: #FFD700;
+    opacity: 0;
+}
+
+/* ── Step card sequential glow (6 s cycle) ──
+   Step 1 glows  : 3 – 27 %   (0.18 – 1.62 s)
+   Bolt 1 flashes: 28 – 36 %  (1.68 – 2.16 s)
+   Step 2 glows  : 38 – 61 %  (2.28 – 3.66 s)
+   Bolt 2 flashes: 62 – 70 %  (3.72 – 4.20 s)
+   Step 3 glows  : 72 – 93 %  (4.32 – 5.58 s)
+   Pause         : 93 – 100 % */
+
+@keyframes step-card-1-glow {
+    0%,2%  { box-shadow:none; border-color:rgba(255,255,255,0.2); background:rgba(255,255,255,0.1); }
+    5%     { box-shadow:0 0 40px rgba(255,215,0,0.8),0 0 80px rgba(255,215,0,0.25),inset 0 0 28px rgba(255,215,0,0.12); border-color:#FFD700; background:rgba(255,215,0,0.13); }
+    24%    { box-shadow:0 0 40px rgba(255,215,0,0.8),0 0 80px rgba(255,215,0,0.25),inset 0 0 28px rgba(255,215,0,0.12); border-color:#FFD700; background:rgba(255,215,0,0.13); }
+    29%,100%{ box-shadow:none; border-color:rgba(255,255,255,0.2); background:rgba(255,255,255,0.1); }
+}
+@keyframes step-num-1-glow {
+    0%,2%  { background:#FFD700; box-shadow:none; color:#1a3a8f; }
+    5%     { background:#fff; box-shadow:0 0 18px #FFD700,0 0 36px rgba(255,215,0,0.5); color:#FFD700; }
+    24%    { background:#fff; box-shadow:0 0 18px #FFD700,0 0 36px rgba(255,215,0,0.5); color:#FFD700; }
+    29%,100%{ background:#FFD700; box-shadow:none; color:#1a3a8f; }
+}
+
+@keyframes step-card-2-glow {
+    0%,37%  { box-shadow:none; border-color:rgba(255,255,255,0.2); background:rgba(255,255,255,0.1); }
+    40%     { box-shadow:0 0 40px rgba(255,215,0,0.8),0 0 80px rgba(255,215,0,0.25),inset 0 0 28px rgba(255,215,0,0.12); border-color:#FFD700; background:rgba(255,215,0,0.13); }
+    58%     { box-shadow:0 0 40px rgba(255,215,0,0.8),0 0 80px rgba(255,215,0,0.25),inset 0 0 28px rgba(255,215,0,0.12); border-color:#FFD700; background:rgba(255,215,0,0.13); }
+    63%,100%{ box-shadow:none; border-color:rgba(255,255,255,0.2); background:rgba(255,255,255,0.1); }
+}
+@keyframes step-num-2-glow {
+    0%,37%  { background:#FFD700; box-shadow:none; color:#1a3a8f; }
+    40%     { background:#fff; box-shadow:0 0 18px #FFD700,0 0 36px rgba(255,215,0,0.5); color:#FFD700; }
+    58%     { background:#fff; box-shadow:0 0 18px #FFD700,0 0 36px rgba(255,215,0,0.5); color:#FFD700; }
+    63%,100%{ background:#FFD700; box-shadow:none; color:#1a3a8f; }
+}
+
+@keyframes step-card-3-glow {
+    0%,71%  { box-shadow:none; border-color:rgba(255,255,255,0.2); background:rgba(255,255,255,0.1); }
+    74%     { box-shadow:0 0 40px rgba(255,215,0,0.8),0 0 80px rgba(255,215,0,0.25),inset 0 0 28px rgba(255,215,0,0.12); border-color:#FFD700; background:rgba(255,215,0,0.13); }
+    91%     { box-shadow:0 0 40px rgba(255,215,0,0.8),0 0 80px rgba(255,215,0,0.25),inset 0 0 28px rgba(255,215,0,0.12); border-color:#FFD700; background:rgba(255,215,0,0.13); }
+    96%,100%{ box-shadow:none; border-color:rgba(255,255,255,0.2); background:rgba(255,255,255,0.1); }
+}
+@keyframes step-num-3-glow {
+    0%,71%  { background:#FFD700; box-shadow:none; color:#1a3a8f; }
+    74%     { background:#fff; box-shadow:0 0 18px #FFD700,0 0 36px rgba(255,215,0,0.5); color:#FFD700; }
+    91%     { background:#fff; box-shadow:0 0 18px #FFD700,0 0 36px rgba(255,215,0,0.5); color:#FFD700; }
+    96%,100%{ background:#FFD700; box-shadow:none; color:#1a3a8f; }
+}
+
+/* Bolt connectors fire between each step */
+@keyframes bolt-1-flash {
+    0%,26%  { opacity:0; transform:scale(0.3) rotate(-15deg); filter:none; }
+    30%     { opacity:1; transform:scale(1.5) rotate(5deg); filter:drop-shadow(0 0 10px #FFD700) drop-shadow(0 0 4px #fff); color:#fff; }
+    35%     { opacity:1; transform:scale(1.1) rotate(0deg); filter:drop-shadow(0 0 7px #FFD700); color:#FFD700; }
+    39%,100%{ opacity:0; transform:scale(0.3) rotate(15deg); filter:none; }
+}
+@keyframes bolt-2-flash {
+    0%,60%  { opacity:0; transform:scale(0.3) rotate(-15deg); filter:none; }
+    64%     { opacity:1; transform:scale(1.5) rotate(5deg); filter:drop-shadow(0 0 10px #FFD700) drop-shadow(0 0 4px #fff); color:#fff; }
+    69%     { opacity:1; transform:scale(1.1) rotate(0deg); filter:drop-shadow(0 0 7px #FFD700); color:#FFD700; }
+    73%,100%{ opacity:0; transform:scale(0.3) rotate(15deg); filter:none; }
+}
+
+.home-step-card-1 { animation:step-card-1-glow 6s ease-in-out infinite; }
+.home-step-card-2 { animation:step-card-2-glow 6s ease-in-out infinite; }
+.home-step-card-3 { animation:step-card-3-glow 6s ease-in-out infinite; }
+.home-step-card-1 .home-step-number { animation:step-num-1-glow 6s ease-in-out infinite; }
+.home-step-card-2 .home-step-number { animation:step-num-2-glow 6s ease-in-out infinite; }
+.home-step-card-3 .home-step-number { animation:step-num-3-glow 6s ease-in-out infinite; }
+.step-connector-1 i { animation:bolt-1-flash 6s ease-in-out infinite; }
+.step-connector-2 i { animation:bolt-2-flash 6s ease-in-out infinite; }
+
+/* ── Mission value box animations (staggered float + border glow) ── */
+@keyframes mission-float {
+    0%,100% { transform:translateY(0); }
+    50%     { transform:translateY(-8px); }
+}
+@keyframes mission-border-glow {
+    0%,100% { border-color:rgba(255,255,255,0.15); box-shadow:none; }
+    50%     { border-color:rgba(255,215,0,0.5); box-shadow:0 0 20px rgba(255,215,0,0.2),inset 0 0 14px rgba(255,215,0,0.07); }
+}
+.home-mission-value:nth-child(1) {
+    animation:mission-float 3.2s ease-in-out infinite, mission-border-glow 3.2s ease-in-out infinite;
+    animation-delay:0s, 0s;
+}
+.home-mission-value:nth-child(2) {
+    animation:mission-float 3.2s ease-in-out infinite, mission-border-glow 3.2s ease-in-out infinite;
+    animation-delay:0.9s, 0.9s;
+}
+.home-mission-value:nth-child(3) {
+    animation:mission-float 3.2s ease-in-out infinite, mission-border-glow 3.2s ease-in-out infinite;
+    animation-delay:1.8s, 1.8s;
+}
 @media (max-width: 768px) {
-    .home-features-grid, .home-steps-grid { grid-template-columns: 1fr; }
+    .home-features-grid { grid-template-columns: 1fr; }
+    .home-steps-grid { grid-template-columns: 1fr; }
+    .step-electric-connector { display: none; }
     .home-section-title { font-size: 26px; }
     .home-overview-section, .home-steps-section { padding: 60px 20px; }
 }
 @media (min-width: 769px) and (max-width: 1024px) {
     .home-features-grid { grid-template-columns: repeat(2, 1fr); }
-    .home-steps-grid { grid-template-columns: repeat(3, 1fr); }
+    .home-steps-grid { grid-template-columns: 1fr 52px 1fr 52px 1fr; }
 }
 
 /* Stats Strip */
