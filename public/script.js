@@ -962,18 +962,18 @@ var App = {
                         <p class="footer-social-desc">Stay updated with the latest CSC activities and announcements on our social media pages.</p>
                     </div>
                     <div>
-                        <div class="footer-col-title">Contact &amp; Location</div>
+                        <div class="footer-col-title">Contact</div>
                         <div class="footer-contact-item">
                             <i class="fas fa-map-marker-alt footer-contact-icon"></i>
                             <span class="footer-contact-text">Barangay 20 Cabangan East, Legazpi City, Albay, Philippines 4500</span>
                         </div>
                         <div class="footer-contact-item">
-                            <i class="fas fa-university footer-contact-icon"></i>
-                            <span class="footer-contact-text">STI College Legazpi — Committed to quality education and student welfare.</span>
+                            <i class="fab fa-facebook-f footer-contact-icon"></i>
+                            <a href="https://web.facebook.com/STICollegeLegazpiCollegeStudentCouncil" target="_blank" class="footer-contact-text" style="color:#94a3b8;text-decoration:none;">CSC STI College Legazpi</a>
                         </div>
                         <div class="footer-contact-item">
-                            <i class="fas fa-shield-alt footer-contact-icon"></i>
-                            <span class="footer-contact-text">All student data is handled securely and with strict confidentiality.</span>
+                            <i class="fab fa-tiktok footer-contact-icon"></i>
+                            <a href="https://www.tiktok.com/@csc_stilegazpi" target="_blank" class="footer-contact-text" style="color:#94a3b8;text-decoration:none;">@csc_stilegazpi</a>
                         </div>
                     </div>
                 </div>
