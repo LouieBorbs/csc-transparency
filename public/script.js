@@ -795,6 +795,10 @@ var App = {
                     <h1 class="hero-title">CSC Transparency Website</h1>
                     <p style="font-size:20px;font-weight:600;color:#FFD700;margin-bottom:16px;letter-spacing:0.5px;">CSC - STI College Legazpi</p>
                     <p class="hero-subtitle">Your gateway to transparent governance, student representation, and institutional excellence. Access announcements, events, files, and more.</p>
+                    <div class="hero-click-hint">
+                        <span class="hero-click-text">Click Here</span>
+                        <i class="fas fa-arrow-down hero-click-arrow"></i>
+                    </div>
                     <button class="hero-register-btn" id="hero-register-btn"><i class="fas fa-user-plus"></i> Register Now</button>
                 </div>
             </section>

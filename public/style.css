@@ -522,6 +522,31 @@ body {
     margin: 0 auto 32px;
 }
 
+@keyframes hero-arrow-bounce {
+    0%, 100% { transform: translateY(0); opacity: 1; }
+    50%       { transform: translateY(9px); opacity: 0.6; }
+}
+.hero-click-hint {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 14px;
+}
+.hero-click-text {
+    font-size: 12px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.75);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+.hero-click-arrow {
+    font-size: 22px;
+    color: #FFD700;
+    animation: hero-arrow-bounce 0.85s ease-in-out infinite;
+    filter: drop-shadow(0 2px 6px rgba(255,215,0,0.5));
+}
+
 @keyframes hero-btn-pulse {
     0%   { box-shadow: 0 0 0 0 rgba(255,215,0,0.7), 0 8px 32px rgba(255,215,0,0.35); }
     18%  { box-shadow: 0 0 0 22px rgba(255,215,0,0), 0 8px 32px rgba(255,215,0,0.35); }
