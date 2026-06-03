@@ -695,8 +695,9 @@ var App = {
             var navLink = e.target.closest('.nav-link') || e.target.closest('.mobile-nav-link');
             if (navLink) {
                 var txt = navLink.textContent.trim();
-                if (txt === 'About') { e.preventDefault(); self.renderAbout(); }
-                if (txt === 'Home')  { e.preventDefault(); self.renderLandingPage(); }
+                if (txt === 'About')      { e.preventDefault(); self.renderAbout(); }
+                if (txt === 'Contact Us') { e.preventDefault(); self.renderContactUs(); }
+                if (txt === 'Home')       { e.preventDefault(); self.renderLandingPage(); }
             }
 
             // Close mobile menu when clicking a nav link
@@ -1123,6 +1124,243 @@ var App = {
                 var dropdown = document.getElementById('login-dropdown');
                 if (dropdown) dropdown.classList.remove('show');
                 self.renderRegister();
+            });
+        }
+    },
+
+    renderContactUs: function() {
+        var self = this;
+        var app = document.getElementById('app');
+        this.currentPage = 'contact';
+        app.innerHTML = `
+            <nav class="navbar">
+                <div class="navbar-left">
+                    <div class="navbar-logo"><img src="csc-logo.jpeg" alt="CSC Logo"></div>
+                    <span class="navbar-brand">CSC Transparency</span>
+                </div>
+                <div class="navbar-center">
+                    <a href="#" class="nav-link" id="contact-nav-home">Home</a>
+                    <a href="#" class="nav-link" id="contact-nav-about">About</a>
+                    <a href="#" class="nav-link nav-link-active">Contact Us</a>
+                    <a href="#" class="nav-link">FAQ</a>
+                </div>
+                <div class="navbar-right">
+                    <button class="login-btn" id="contact-login-btn">Log in</button>
+                </div>
+                <button class="mobile-menu-btn" id="mobile-menu-btn"><span class="hamburger-icon"></span></button>
+            </nav>
+            <div class="mobile-menu" id="mobile-menu">
+                <a href="#" class="mobile-nav-link" id="contact-mobile-home">Home</a>
+                <a href="#" class="mobile-nav-link" id="contact-mobile-about">About</a>
+                <a href="#" class="mobile-nav-link">Contact Us</a>
+                <a href="#" class="mobile-nav-link">FAQ</a>
+                <button class="mobile-login-btn login-btn" id="mobile-login-btn">Log in</button>
+            </div>
+            <div class="mobile-menu-overlay" id="mobile-menu-overlay"></div>
+
+            <!-- Hero -->
+            <section class="contact-hero">
+                <div class="contact-hero-content">
+                    <div class="contact-hero-icon"><i class="fas fa-envelope-open-text"></i></div>
+                    <h1 class="contact-hero-title">Contact Us</h1>
+                    <p class="contact-hero-sub">CSC - STI College Legazpi</p>
+                    <p class="contact-hero-desc">Have a question, suggestion, or concern? Reach out to the College Student Council. We are here to listen and serve the student body.</p>
+                </div>
+            </section>
+
+            <!-- Contact cards + Form -->
+            <section class="contact-main-section">
+                <div class="contact-main-inner">
+
+                    <!-- Left: info cards -->
+                    <div class="contact-info-col">
+                        <h2 class="contact-info-heading">Get in Touch</h2>
+                        <p class="contact-info-sub">You can reach us through any of the following channels. We aim to respond within 1–2 school days.</p>
+
+                        <div class="contact-info-card">
+                            <div class="contact-info-icon" style="background:#e8f0fe;">
+                                <i class="fas fa-map-marker-alt" style="color:#1a3a8f;"></i>
+                            </div>
+                            <div>
+                                <div class="contact-info-label">Our Location</div>
+                                <div class="contact-info-value">Barangay 20 Cabangan East,<br>Legazpi City, Albay, Philippines 4500</div>
+                            </div>
+                        </div>
+
+                        <div class="contact-info-card">
+                            <div class="contact-info-icon" style="background:#e8f0fe;">
+                                <i class="fas fa-school" style="color:#1a3a8f;"></i>
+                            </div>
+                            <div>
+                                <div class="contact-info-label">School</div>
+                                <div class="contact-info-value">STI College Legazpi<br>College Student Council Office</div>
+                            </div>
+                        </div>
+
+                        <div class="contact-info-card">
+                            <div class="contact-info-icon" style="background:#1877f2;">
+                                <i class="fab fa-facebook-f" style="color:#fff;"></i>
+                            </div>
+                            <div>
+                                <div class="contact-info-label">Facebook Page</div>
+                                <a href="https://web.facebook.com/STICollegeLegazpiCollegeStudentCouncil" target="_blank" class="contact-info-link">STI College Legazpi — CSC</a>
+                            </div>
+                        </div>
+
+                        <div class="contact-info-card">
+                            <div class="contact-info-icon" style="background:#000;">
+                                <i class="fab fa-tiktok" style="color:#fff;"></i>
+                            </div>
+                            <div>
+                                <div class="contact-info-label">TikTok</div>
+                                <a href="https://www.tiktok.com/@csc_stilegazpi" target="_blank" class="contact-info-link">@csc_stilegazpi</a>
+                            </div>
+                        </div>
+
+                        <div class="contact-social-row">
+                            <a href="https://web.facebook.com/STICollegeLegazpiCollegeStudentCouncil" target="_blank" class="contact-social-btn contact-social-fb">
+                                <i class="fab fa-facebook-f"></i> Follow on Facebook
+                            </a>
+                            <a href="https://www.tiktok.com/@csc_stilegazpi" target="_blank" class="contact-social-btn contact-social-tt">
+                                <i class="fab fa-tiktok"></i> Follow on TikTok
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Right: form -->
+                    <div class="contact-form-col">
+                        <div class="contact-form-card">
+                            <h2 class="contact-form-heading">Send Us a Message</h2>
+                            <p class="contact-form-sub">Fill out the form below and we will get back to you as soon as possible.</p>
+                            <div id="contact-success" class="contact-success-msg" style="display:none;">
+                                <i class="fas fa-check-circle"></i> Your message has been sent! We will get back to you soon.
+                            </div>
+                            <form id="contact-form" class="contact-form">
+                                <div class="contact-form-row">
+                                    <div class="contact-field">
+                                        <label class="contact-label">Full Name <span class="contact-required">*</span></label>
+                                        <input type="text" class="contact-input" id="c-name" placeholder="Enter your full name" required>
+                                    </div>
+                                    <div class="contact-field">
+                                        <label class="contact-label">Email Address <span class="contact-required">*</span></label>
+                                        <input type="email" class="contact-input" id="c-email" placeholder="Enter your email" required>
+                                    </div>
+                                </div>
+                                <div class="contact-field">
+                                    <label class="contact-label">Subject <span class="contact-required">*</span></label>
+                                    <select class="contact-input" id="c-subject" required>
+                                        <option value="" disabled selected>Select a subject</option>
+                                        <option>General Inquiry</option>
+                                        <option>Event Information</option>
+                                        <option>Announcements</option>
+                                        <option>Budget &amp; Finance</option>
+                                        <option>Student Concern</option>
+                                        <option>Suggestion</option>
+                                        <option>Other</option>
+                                    </select>
+                                </div>
+                                <div class="contact-field">
+                                    <label class="contact-label">Message <span class="contact-required">*</span></label>
+                                    <textarea class="contact-input contact-textarea" id="c-message" placeholder="Write your message here..." required></textarea>
+                                </div>
+                                <button type="submit" class="contact-submit-btn">
+                                    <i class="fas fa-paper-plane"></i> Send Message
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- Footer -->
+            <footer class="site-footer">
+                <div class="footer-inner">
+                    <div>
+                        <div class="footer-brand-logo"><img src="csc-logo.jpeg" alt="CSC Logo"></div>
+                        <div class="footer-brand-name">CSC Transparency Website</div>
+                        <div class="footer-brand-sub">CSC - STI College Legazpi</div>
+                        <p class="footer-brand-desc">Your official gateway to transparent governance, student representation, and institutional excellence.</p>
+                    </div>
+                    <div>
+                        <div class="footer-col-title">Quick Links</div>
+                        <ul class="footer-links">
+                            <li><a href="#" id="contact-footer-home">Home</a></li>
+                            <li><a href="#" id="contact-footer-about">About</a></li>
+                            <li><a href="#">Contact Us</a></li>
+                            <li><a href="#">FAQ</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <div class="footer-col-title">Follow Us</div>
+                        <div class="footer-socials">
+                            <a href="https://web.facebook.com/STICollegeLegazpiCollegeStudentCouncil" target="_blank" class="footer-social-link" title="Facebook"><i class="fab fa-facebook-f"></i></a>
+                            <a href="https://www.tiktok.com/@csc_stilegazpi" target="_blank" class="footer-social-link" title="TikTok"><i class="fab fa-tiktok"></i></a>
+                        </div>
+                        <p class="footer-social-desc">Stay updated on our social media pages.</p>
+                    </div>
+                    <div>
+                        <div class="footer-col-title">Contact</div>
+                        <div class="footer-contact-item">
+                            <i class="fas fa-map-marker-alt footer-contact-icon"></i>
+                            <span class="footer-contact-text">Barangay 20 Cabangan East, Legazpi City, Albay, Philippines 4500</span>
+                        </div>
+                        <div class="footer-contact-item">
+                            <i class="fab fa-facebook-f footer-contact-icon"></i>
+                            <a href="https://web.facebook.com/STICollegeLegazpiCollegeStudentCouncil" target="_blank" class="footer-contact-text" style="color:#94a3b8;text-decoration:none;">CSC STI College Legazpi</a>
+                        </div>
+                        <div class="footer-contact-item">
+                            <i class="fab fa-tiktok footer-contact-icon"></i>
+                            <a href="https://www.tiktok.com/@csc_stilegazpi" target="_blank" class="footer-contact-text" style="color:#94a3b8;text-decoration:none;">@csc_stilegazpi</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="footer-bottom">
+                    <span class="footer-bottom-text">&copy; 2026 CSC - STI College Legazpi. All rights reserved.</span>
+                    <span class="footer-bottom-badge">Built with Transparency in Mind</span>
+                </div>
+            </footer>
+        `;
+
+        // Nav wiring
+        var navMap = {
+            'contact-nav-home': function() { self.renderLandingPage(); },
+            'contact-nav-about': function() { self.renderAbout(); },
+            'contact-mobile-home': function() { self.renderLandingPage(); },
+            'contact-mobile-about': function() { self.renderAbout(); },
+            'contact-footer-home': function() { self.renderLandingPage(); },
+            'contact-footer-about': function() { self.renderAbout(); }
+        };
+        Object.keys(navMap).forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) el.addEventListener('click', function(e) { e.preventDefault(); navMap[id](); });
+        });
+
+        // Login button
+        var loginBtn = document.getElementById('contact-login-btn');
+        if (loginBtn) {
+            loginBtn.addEventListener('click', function() {
+                self.renderLandingPage();
+                setTimeout(function() {
+                    var dd = document.getElementById('login-dropdown');
+                    if (dd) dd.classList.add('show');
+                }, 50);
+            });
+        }
+
+        // Contact form submit
+        var contactForm = document.getElementById('contact-form');
+        if (contactForm) {
+            contactForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                var name    = document.getElementById('c-name').value.trim();
+                var email   = document.getElementById('c-email').value.trim();
+                var subject = document.getElementById('c-subject').value;
+                var message = document.getElementById('c-message').value.trim();
+                if (!name || !email || !subject || !message) return;
+                contactForm.style.display = 'none';
+                var successMsg = document.getElementById('contact-success');
+                if (successMsg) successMsg.style.display = 'flex';
             });
         }
     },
