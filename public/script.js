@@ -691,6 +691,14 @@ var App = {
                 }
             }
 
+            // Nav link routing (landing page navbar)
+            var navLink = e.target.closest('.nav-link') || e.target.closest('.mobile-nav-link');
+            if (navLink) {
+                var txt = navLink.textContent.trim();
+                if (txt === 'About') { e.preventDefault(); self.renderAbout(); }
+                if (txt === 'Home')  { e.preventDefault(); self.renderLandingPage(); }
+            }
+
             // Close mobile menu when clicking a nav link
             if (e.target.closest('.mobile-nav-link')) {
                 var mobileMenu = document.getElementById('mobile-menu');
@@ -1115,6 +1123,296 @@ var App = {
                 var dropdown = document.getElementById('login-dropdown');
                 if (dropdown) dropdown.classList.remove('show');
                 self.renderRegister();
+            });
+        }
+    },
+
+    renderAbout: function() {
+        var self = this;
+        var app = document.getElementById('app');
+        this.currentPage = 'about';
+        app.innerHTML = `
+            <nav class="navbar">
+                <div class="navbar-left">
+                    <div class="navbar-logo"><img src="csc-logo.jpeg" alt="CSC Logo"></div>
+                    <span class="navbar-brand">CSC Transparency</span>
+                </div>
+                <div class="navbar-center">
+                    <a href="#" class="nav-link" id="about-nav-home">Home</a>
+                    <a href="#" class="nav-link nav-link-active">About</a>
+                    <a href="#" class="nav-link">Contact Us</a>
+                    <a href="#" class="nav-link">FAQ</a>
+                </div>
+                <div class="navbar-right">
+                    <button class="login-btn" id="about-login-btn">Log in</button>
+                </div>
+                <button class="mobile-menu-btn" id="mobile-menu-btn"><span class="hamburger-icon"></span></button>
+            </nav>
+
+            <div class="mobile-menu" id="mobile-menu">
+                <a href="#" class="mobile-nav-link" id="about-mobile-home">Home</a>
+                <a href="#" class="mobile-nav-link">About</a>
+                <a href="#" class="mobile-nav-link">Contact Us</a>
+                <a href="#" class="mobile-nav-link">FAQ</a>
+                <button class="mobile-login-btn login-btn" id="mobile-login-btn">Log in</button>
+            </div>
+            <div class="mobile-menu-overlay" id="mobile-menu-overlay"></div>
+
+            <!-- Hero Banner -->
+            <section class="about-hero">
+                <div class="about-hero-content">
+                    <div class="about-hero-logo"><img src="csc-logo.jpeg" alt="CSC Logo"></div>
+                    <h1 class="about-hero-title">About the CSC</h1>
+                    <p class="about-hero-sub">STI College Legazpi — College Student Council</p>
+                    <p class="about-hero-desc">Established and governed by its Constitution and By-Laws, the CSC is an autonomous student organization committed to transparent, accountable, and student-centered governance.</p>
+                </div>
+            </section>
+
+            <!-- Preamble -->
+            <section class="about-section about-section-light">
+                <div class="about-inner">
+                    <div class="about-section-label">Preamble</div>
+                    <h2 class="about-section-title">Our Foundation</h2>
+                    <p class="about-body-text">"We the students of STI College Legazpi stand at the forefront of innovative and relevant education, nurturing individuals to become competent and responsible members of society. Our commitment extends to delivering superior learning systems, providing knowledge that fosters growth and development. We strive with integrity, dedication, transparency, and creativity, to provide optimum value to all our stakeholders — our students, faculty, employees, partners, shareholders, and our community."</p>
+                </div>
+            </section>
+
+            <!-- Principles -->
+            <section class="about-section about-section-dark">
+                <div class="about-inner">
+                    <div class="about-section-label" style="color:rgba(255,215,0,0.8);">Article III</div>
+                    <h2 class="about-section-title" style="color:#fff;">Principles &amp; Objectives</h2>
+                    <div class="about-principles-grid">
+                        <div class="about-principle-card">
+                            <div class="about-principle-icon"><i class="fas fa-balance-scale"></i></div>
+                            <h3>Autonomous Governance</h3>
+                            <p>The CSC is an autonomous organization that actively advocates for students' rights and is accountable to the student body.</p>
+                        </div>
+                        <div class="about-principle-card">
+                            <div class="about-principle-icon"><i class="fas fa-graduation-cap"></i></div>
+                            <h3>Holistic Development</h3>
+                            <p>To uphold the ideals of the College ensuring a well-rounded intellectual, moral, spiritual, and physical development of every student.</p>
+                        </div>
+                        <div class="about-principle-card">
+                            <div class="about-principle-icon"><i class="fas fa-hands-helping"></i></div>
+                            <h3>Service &amp; Responsibility</h3>
+                            <p>To develop a sense of service and responsibility among students and strengthen ties among students, faculty, and administration.</p>
+                        </div>
+                        <div class="about-principle-card">
+                            <div class="about-principle-icon"><i class="fas fa-eye"></i></div>
+                            <h3>Transparency</h3>
+                            <p>The CSC ensures transparency in all actions — from financial reports to council decisions — making them openly accessible to all students.</p>
+                        </div>
+                        <div class="about-principle-card">
+                            <div class="about-principle-icon"><i class="fas fa-users"></i></div>
+                            <h3>Inclusive Membership</h3>
+                            <p>All officially enrolled tertiary students of STI College Legazpi are automatically members of the CSC with the right to participate and vote.</p>
+                        </div>
+                        <div class="about-principle-card">
+                            <div class="about-principle-icon"><i class="fas fa-star"></i></div>
+                            <h3>Excellence in Leadership</h3>
+                            <p>Officers are elected through a transparent, fair, and inclusive election process to ensure democratic selection of student leaders.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Seal Meaning -->
+            <section class="about-section about-section-light">
+                <div class="about-inner">
+                    <div class="about-section-label">Article II</div>
+                    <h2 class="about-section-title">Our Official Seal</h2>
+                    <div class="about-seal-wrap">
+                        <div class="about-seal-img">
+                            <img src="csc-logo.jpeg" alt="CSC Official Seal">
+                        </div>
+                        <div class="about-seal-symbols">
+                            <div class="about-symbol-item">
+                                <span class="about-symbol-icon"><i class="fas fa-dove"></i></span>
+                                <div><strong>Eagle</strong><br><span>Symbol of beauty, bravery, courage, honor, pride, determination, and grace.</span></div>
+                            </div>
+                            <div class="about-symbol-item">
+                                <span class="about-symbol-icon"><i class="fas fa-fire"></i></span>
+                                <div><strong>Torch of Knowledge</strong><br><span>Represents knowledge and wisdom.</span></div>
+                            </div>
+                            <div class="about-symbol-item">
+                                <span class="about-symbol-icon"><i class="fas fa-book"></i></span>
+                                <div><strong>Book and Candle</strong><br><span>Symbolizes knowledge in education.</span></div>
+                            </div>
+                            <div class="about-symbol-item">
+                                <span class="about-symbol-icon"><i class="fas fa-peace"></i></span>
+                                <div><strong>MPATAPO</strong><br><span>Symbolizes reconciliation, peacemaking, and pacification.</span></div>
+                            </div>
+                            <div class="about-symbol-item">
+                                <span class="about-symbol-icon"><i class="fas fa-globe-asia"></i></span>
+                                <div><strong>FOTURM EST. ERIT STI</strong><br><span>"Be Future Ready, Be STI" — the council's guiding motto in Latin.</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Officers -->
+            <section class="about-section about-section-dark">
+                <div class="about-inner">
+                    <div class="about-section-label" style="color:rgba(255,215,0,0.8);">Article VI &amp; XVI</div>
+                    <h2 class="about-section-title" style="color:#fff;">CSC Officers A.Y. 2024</h2>
+                    <div class="about-officers-grid">
+                        <div class="about-officer-card about-officer-primary">
+                            <div class="about-officer-role">President</div>
+                            <div class="about-officer-name">John Patrick M. Llosala</div>
+                            <div class="about-officer-desc">Chief Executive Officer of the CSC. Leads the organization, represents the student body, and oversees all operations.</div>
+                        </div>
+                        <div class="about-officer-card about-officer-primary">
+                            <div class="about-officer-role">Vice-President</div>
+                            <div class="about-officer-name">Reizza Jeanele D. Flestado</div>
+                            <div class="about-officer-desc">Supports the President and assumes leadership in the absence of the President.</div>
+                        </div>
+                        <div class="about-officer-card">
+                            <div class="about-officer-role">Secretary-General</div>
+                            <div class="about-officer-name">Cyr Jay Lopez</div>
+                            <div class="about-officer-desc">Maintains records, minutes of meetings, and ensures effective communication within the organization.</div>
+                        </div>
+                        <div class="about-officer-card">
+                            <div class="about-officer-role">Treasurer</div>
+                            <div class="about-officer-name">Felicity Mae M. Sy</div>
+                            <div class="about-officer-desc">Manages financial affairs, budgeting, reporting, and fundraising activities of the Council.</div>
+                        </div>
+                        <div class="about-officer-card">
+                            <div class="about-officer-role">Auditor</div>
+                            <div class="about-officer-name">Luke Simon N. Saronhillo</div>
+                            <div class="about-officer-desc">Ensures financial integrity and compliance; verifies accuracy of financial reports and transactions.</div>
+                        </div>
+                        <div class="about-officer-card">
+                            <div class="about-officer-role">Public Information Officer</div>
+                            <div class="about-officer-name">Pualine Loise Ajero</div>
+                            <div class="about-officer-desc">Handles external communications, public relations, and promotion of the Council's activities.</div>
+                        </div>
+                        <div class="about-officer-card">
+                            <div class="about-officer-role">Business Manager</div>
+                            <div class="about-officer-name">Yvone Q. Cantina</div>
+                            <div class="about-officer-desc">Oversees business-related activities, sponsorships, and partnerships for the Council.</div>
+                        </div>
+                        <div class="about-officer-card">
+                            <div class="about-officer-role">Business Manager</div>
+                            <div class="about-officer-name">Angelie Justine Ll. Mornete</div>
+                            <div class="about-officer-desc">Oversees business-related activities, sponsorships, and partnerships for the Council.</div>
+                        </div>
+                        <div class="about-officer-card">
+                            <div class="about-officer-role">Peace Officer</div>
+                            <div class="about-officer-name">Jade O. Bernal</div>
+                            <div class="about-officer-desc">Maintains order and security during Council events. Enforces rules and provides guidance to students.</div>
+                        </div>
+                        <div class="about-officer-card">
+                            <div class="about-officer-role">Peace Officer</div>
+                            <div class="about-officer-name">Mark Anthony S. Cruz I</div>
+                            <div class="about-officer-desc">Maintains order and security during Council events. Enforces rules and provides guidance to students.</div>
+                        </div>
+                        <div class="about-officer-card">
+                            <div class="about-officer-role">BSAIS Representative</div>
+                            <div class="about-officer-name">Yasmin Elisha A. Siera</div>
+                            <div class="about-officer-desc">Represents BS Information Systems students on the Council.</div>
+                        </div>
+                        <div class="about-officer-card">
+                            <div class="about-officer-role">BSBA Representative</div>
+                            <div class="about-officer-name">Shintarou C. Arai</div>
+                            <div class="about-officer-desc">Represents BS Business Administration students on the Council.</div>
+                        </div>
+                        <div class="about-officer-card">
+                            <div class="about-officer-role">BSCPE Representative</div>
+                            <div class="about-officer-name">Micahel Angelo Vasquez</div>
+                            <div class="about-officer-desc">Represents BS Computer Engineering students on the Council.</div>
+                        </div>
+                        <div class="about-officer-card">
+                            <div class="about-officer-role">BSHM Representative</div>
+                            <div class="about-officer-name">Lupe Austria III</div>
+                            <div class="about-officer-desc">Represents BS Hotel Management students on the Council.</div>
+                        </div>
+                        <div class="about-officer-card">
+                            <div class="about-officer-role">BSIT Representative</div>
+                            <div class="about-officer-name">Justine A. Acuna</div>
+                            <div class="about-officer-desc">Represents BS Information Technology students on the Council.</div>
+                        </div>
+                    </div>
+                    <div class="about-advisers">
+                        <div class="about-adviser-item">
+                            <i class="fas fa-user-tie"></i>
+                            <div><strong>Patrick Celino Maquinana</strong><br><span>CSC Adviser</span></div>
+                        </div>
+                        <div class="about-adviser-item">
+                            <i class="fas fa-chalkboard-teacher"></i>
+                            <div><strong>Maria Diejhey B. Martinez, MIT</strong><br><span>Academic Head — STI College Legazpi</span></div>
+                        </div>
+                        <div class="about-adviser-item">
+                            <i class="fas fa-school"></i>
+                            <div><strong>May Anne V. Revale</strong><br><span>School Administrator — STI College Legazpi</span></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Footer -->
+            <footer class="site-footer">
+                <div class="footer-inner">
+                    <div>
+                        <div class="footer-brand-logo"><img src="csc-logo.jpeg" alt="CSC Logo"></div>
+                        <div class="footer-brand-name">CSC Transparency Website</div>
+                        <div class="footer-brand-sub">CSC - STI College Legazpi</div>
+                        <p class="footer-brand-desc">Your official gateway to transparent governance, student representation, and institutional excellence.</p>
+                    </div>
+                    <div>
+                        <div class="footer-col-title">Quick Links</div>
+                        <ul class="footer-links">
+                            <li><a href="#" id="about-footer-home">Home</a></li>
+                            <li><a href="#">About</a></li>
+                            <li><a href="#">Contact Us</a></li>
+                            <li><a href="#">FAQ</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <div class="footer-col-title">Follow Us</div>
+                        <div class="footer-socials">
+                            <a href="https://web.facebook.com/STICollegeLegazpiCollegeStudentCouncil" target="_blank" class="footer-social-link" title="Facebook"><i class="fab fa-facebook-f"></i></a>
+                            <a href="https://www.tiktok.com/@csc_stilegazpi" target="_blank" class="footer-social-link" title="TikTok"><i class="fab fa-tiktok"></i></a>
+                        </div>
+                        <p class="footer-social-desc">Stay updated on our social media pages.</p>
+                    </div>
+                    <div>
+                        <div class="footer-col-title">Contact</div>
+                        <div class="footer-contact-item">
+                            <i class="fas fa-map-marker-alt footer-contact-icon"></i>
+                            <span class="footer-contact-text">Barangay 20 Cabangan East, Legazpi City, Albay, Philippines 4500</span>
+                        </div>
+                        <div class="footer-contact-item">
+                            <i class="fab fa-facebook-f footer-contact-icon"></i>
+                            <a href="https://web.facebook.com/STICollegeLegazpiCollegeStudentCouncil" target="_blank" class="footer-contact-text" style="color:#94a3b8;text-decoration:none;">CSC STI College Legazpi</a>
+                        </div>
+                        <div class="footer-contact-item">
+                            <i class="fab fa-tiktok footer-contact-icon"></i>
+                            <a href="https://www.tiktok.com/@csc_stilegazpi" target="_blank" class="footer-contact-text" style="color:#94a3b8;text-decoration:none;">@csc_stilegazpi</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="footer-bottom">
+                    <span class="footer-bottom-text">&copy; 2026 CSC - STI College Legazpi. All rights reserved.</span>
+                    <span class="footer-bottom-badge">Built with Transparency in Mind</span>
+                </div>
+            </footer>
+        `;
+
+        // Wire up Home links on the About page
+        ['about-nav-home','about-mobile-home','about-footer-home'].forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) el.addEventListener('click', function(e) { e.preventDefault(); self.renderLandingPage(); });
+        });
+        var aboutLoginBtn = document.getElementById('about-login-btn');
+        if (aboutLoginBtn) {
+            aboutLoginBtn.addEventListener('click', function() {
+                self.renderLandingPage();
+                setTimeout(function() {
+                    var dd = document.getElementById('login-dropdown');
+                    if (dd) dd.classList.add('show');
+                }, 50);
             });
         }
     },
