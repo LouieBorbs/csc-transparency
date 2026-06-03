@@ -697,6 +697,7 @@ var App = {
                 var txt = navLink.textContent.trim();
                 if (txt === 'About')      { e.preventDefault(); self.renderAbout(); }
                 if (txt === 'Contact Us') { e.preventDefault(); self.renderContactUs(); }
+                if (txt === 'FAQ')        { e.preventDefault(); self.renderFAQ(); }
                 if (txt === 'Home')       { e.preventDefault(); self.renderLandingPage(); }
             }
 
@@ -1124,6 +1125,331 @@ var App = {
                 var dropdown = document.getElementById('login-dropdown');
                 if (dropdown) dropdown.classList.remove('show');
                 self.renderRegister();
+            });
+        }
+    },
+
+    renderFAQ: function() {
+        var self = this;
+        var app = document.getElementById('app');
+        this.currentPage = 'faq';
+
+        var faqs = [
+            {
+                category: 'About the Website',
+                icon: 'fas fa-globe',
+                items: [
+                    {
+                        q: 'What is the CSC Transparency Website?',
+                        a: 'The CSC Transparency Website is an official digital platform of the College Student Council of STI College Legazpi. It provides students with transparent access to announcements, events, financial reports, files, and attendance records — all in one place.'
+                    },
+                    {
+                        q: 'Who can access the website?',
+                        a: 'All officially enrolled tertiary students of STI College Legazpi are eligible to register and access the website. CSC officers and administrators have additional access to manage content.'
+                    },
+                    {
+                        q: 'Is the website free to use?',
+                        a: 'Yes. The CSC Transparency Website is completely free for all registered STI College Legazpi students.'
+                    }
+                ]
+            },
+            {
+                category: 'Registration & Account',
+                icon: 'fas fa-user-plus',
+                items: [
+                    {
+                        q: 'How do I register for an account?',
+                        a: 'Click the "Register Now" button on the home page or the "Register" link in the login form. Fill in your personal details, course, and contact information, then submit. Your account will be reviewed and approved by an admin before you can log in.'
+                    },
+                    {
+                        q: 'How long does account approval take?',
+                        a: 'Account approval is typically done within 1–2 school days by the CSC admin team. You will be able to log in once your account has been approved.'
+                    },
+                    {
+                        q: 'What if my account is not yet approved?',
+                        a: 'If your account is still pending, you will see a notification when you try to log in. Please wait for admin approval. If it takes longer than expected, reach out through the Contact Us page.'
+                    },
+                    {
+                        q: 'Can I update my profile information?',
+                        a: 'Yes. Once logged in, you can update your profile details from your student dashboard under the Profile section.'
+                    },
+                    {
+                        q: 'What should I do if I forget my password?',
+                        a: 'Please contact the CSC admin through the Contact Us page or reach out via the official CSC Facebook page and request a password reset.'
+                    }
+                ]
+            },
+            {
+                category: 'CSC Features',
+                icon: 'fas fa-th-large',
+                items: [
+                    {
+                        q: 'What can I view on the website as a student?',
+                        a: 'Once logged in, you can view official announcements, upcoming and past events, shared files and documents, transparent budget and financial reports, your personal attendance records, and the student directory.'
+                    },
+                    {
+                        q: 'How do I view announcements?',
+                        a: 'After logging in, navigate to the Announcements section on your dashboard. All official CSC announcements are listed there in chronological order.'
+                    },
+                    {
+                        q: 'How can I see the CSC budget and financial reports?',
+                        a: 'Budget and financial reports are available in the Budget & Finance section of your student dashboard. The CSC is committed to full financial transparency.'
+                    },
+                    {
+                        q: 'How do I track my attendance?',
+                        a: 'Your attendance records for CSC events are visible in the Attendance section of your dashboard. Attendance is recorded by CSC officers during events via QR code scanning.'
+                    },
+                    {
+                        q: 'How do I download files and documents?',
+                        a: 'Go to the Files & Documents section on your dashboard. You can preview and download any officially shared documents such as forms, resolutions, and reports.'
+                    }
+                ]
+            },
+            {
+                category: 'Events & Attendance',
+                icon: 'fas fa-calendar-alt',
+                items: [
+                    {
+                        q: 'How is attendance recorded at events?',
+                        a: 'Attendance at CSC events is recorded using QR code scanning. Students present their QR code to a CSC officer who scans it to mark attendance.'
+                    },
+                    {
+                        q: 'Can I view past events?',
+                        a: 'Yes. Both upcoming and past CSC events are listed in the Events section of your dashboard, including details such as location, date, and description.'
+                    },
+                    {
+                        q: 'What if my attendance was not recorded at an event I attended?',
+                        a: 'If you believe your attendance was missed, please contact a CSC officer or reach out through the Contact Us page with your name, student ID, and the event details.'
+                    }
+                ]
+            },
+            {
+                category: 'About the CSC',
+                icon: 'fas fa-users',
+                items: [
+                    {
+                        q: 'What is the College Student Council (CSC)?',
+                        a: 'The CSC is the official autonomous student organization of STI College Legazpi. It is governed by a Constitution and By-Laws and represents all enrolled tertiary students in matters of governance, events, welfare, and student rights.'
+                    },
+                    {
+                        q: 'How are CSC officers elected?',
+                        a: 'CSC officers are elected by the student body through a transparent, fair, and democratic election process involving nomination, campaigning, and voting. Officers serve for a term of one academic year.'
+                    },
+                    {
+                        q: 'Am I automatically a member of the CSC?',
+                        a: 'Yes. According to Article IV of the CSC Constitution and By-Laws, all officially enrolled tertiary students of STI College Legazpi are automatically members of the College Student Council.'
+                    }
+                ]
+            },
+            {
+                category: 'Technical & Support',
+                icon: 'fas fa-headset',
+                items: [
+                    {
+                        q: 'What devices can I use to access the website?',
+                        a: 'The CSC Transparency Website is fully responsive and works on desktops, laptops, tablets, and mobile phones through any modern web browser.'
+                    },
+                    {
+                        q: 'Who do I contact if I encounter a problem on the website?',
+                        a: 'You can reach the CSC admin team through the Contact Us page on this website, or send a message to the official CSC Facebook page.'
+                    },
+                    {
+                        q: 'Is my personal data safe on this website?',
+                        a: 'Yes. All student information is handled with strict confidentiality and is only accessible to authorized CSC administrators and the student themselves.'
+                    }
+                ]
+            }
+        ];
+
+        var faqHTML = faqs.map(function(group, gi) {
+            var items = group.items.map(function(item, ii) {
+                var id = 'faq-' + gi + '-' + ii;
+                return '<div class="faq-item" id="' + id + '">' +
+                    '<button class="faq-question" data-faq="' + id + '">' +
+                        '<span>' + item.q + '</span>' +
+                        '<i class="fas fa-chevron-down faq-chevron"></i>' +
+                    '</button>' +
+                    '<div class="faq-answer"><p>' + item.a + '</p></div>' +
+                '</div>';
+            }).join('');
+            return '<div class="faq-group">' +
+                '<div class="faq-group-header">' +
+                    '<span class="faq-group-icon"><i class="' + group.icon + '"></i></span>' +
+                    '<h3 class="faq-group-title">' + group.category + '</h3>' +
+                '</div>' +
+                items +
+            '</div>';
+        }).join('');
+
+        app.innerHTML = `
+            <nav class="navbar">
+                <div class="navbar-left">
+                    <div class="navbar-logo"><img src="csc-logo.jpeg" alt="CSC Logo"></div>
+                    <span class="navbar-brand">CSC Transparency</span>
+                </div>
+                <div class="navbar-center">
+                    <a href="#" class="nav-link" id="faq-nav-home">Home</a>
+                    <a href="#" class="nav-link" id="faq-nav-about">About</a>
+                    <a href="#" class="nav-link" id="faq-nav-contact">Contact Us</a>
+                    <a href="#" class="nav-link nav-link-active">FAQ</a>
+                </div>
+                <div class="navbar-right">
+                    <button class="login-btn" id="faq-login-btn">Log in</button>
+                </div>
+                <button class="mobile-menu-btn" id="mobile-menu-btn"><span class="hamburger-icon"></span></button>
+            </nav>
+            <div class="mobile-menu" id="mobile-menu">
+                <a href="#" class="mobile-nav-link" id="faq-mobile-home">Home</a>
+                <a href="#" class="mobile-nav-link" id="faq-mobile-about">About</a>
+                <a href="#" class="mobile-nav-link" id="faq-mobile-contact">Contact Us</a>
+                <a href="#" class="mobile-nav-link">FAQ</a>
+                <button class="mobile-login-btn login-btn" id="mobile-login-btn">Log in</button>
+            </div>
+            <div class="mobile-menu-overlay" id="mobile-menu-overlay"></div>
+
+            <section class="faq-hero">
+                <div class="faq-hero-content">
+                    <div class="faq-hero-icon"><i class="fas fa-question-circle"></i></div>
+                    <h1 class="faq-hero-title">Frequently Asked Questions</h1>
+                    <p class="faq-hero-sub">CSC - STI College Legazpi</p>
+                    <p class="faq-hero-desc">Find answers to the most common questions about the CSC Transparency Website, registration, features, and the College Student Council.</p>
+                </div>
+            </section>
+
+            <section class="faq-main-section">
+                <div class="faq-main-inner">
+                    <div class="faq-search-wrap">
+                        <i class="fas fa-search faq-search-icon"></i>
+                        <input type="text" id="faq-search" class="faq-search-input" placeholder="Search questions...">
+                    </div>
+                    <div id="faq-content">
+                        ${faqHTML}
+                    </div>
+                    <div id="faq-no-results" class="faq-no-results" style="display:none;">
+                        <i class="fas fa-search" style="font-size:40px;color:#cbd5e1;margin-bottom:14px;"></i>
+                        <p>No questions found matching your search.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="faq-cta-section">
+                <div class="faq-cta-inner">
+                    <i class="fas fa-comments faq-cta-icon"></i>
+                    <h2 class="faq-cta-title">Still have a question?</h2>
+                    <p class="faq-cta-desc">Can't find the answer you're looking for? Send us a message and the CSC team will get back to you.</p>
+                    <button class="faq-cta-btn" id="faq-cta-contact">Contact Us</button>
+                </div>
+            </section>
+
+            <footer class="site-footer">
+                <div class="footer-inner">
+                    <div>
+                        <div class="footer-brand-logo"><img src="csc-logo.jpeg" alt="CSC Logo"></div>
+                        <div class="footer-brand-name">CSC Transparency Website</div>
+                        <div class="footer-brand-sub">CSC - STI College Legazpi</div>
+                        <p class="footer-brand-desc">Your official gateway to transparent governance, student representation, and institutional excellence.</p>
+                    </div>
+                    <div>
+                        <div class="footer-col-title">Quick Links</div>
+                        <ul class="footer-links">
+                            <li><a href="#" id="faq-footer-home">Home</a></li>
+                            <li><a href="#" id="faq-footer-about">About</a></li>
+                            <li><a href="#" id="faq-footer-contact">Contact Us</a></li>
+                            <li><a href="#">FAQ</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <div class="footer-col-title">Follow Us</div>
+                        <div class="footer-socials">
+                            <a href="https://web.facebook.com/STICollegeLegazpiCollegeStudentCouncil" target="_blank" class="footer-social-link" title="Facebook"><i class="fab fa-facebook-f"></i></a>
+                            <a href="https://www.tiktok.com/@csc_stilegazpi" target="_blank" class="footer-social-link" title="TikTok"><i class="fab fa-tiktok"></i></a>
+                        </div>
+                        <p class="footer-social-desc">Stay updated on our social media pages.</p>
+                    </div>
+                    <div>
+                        <div class="footer-col-title">Contact</div>
+                        <div class="footer-contact-item">
+                            <i class="fas fa-map-marker-alt footer-contact-icon"></i>
+                            <span class="footer-contact-text">Barangay 20 Cabangan East, Legazpi City, Albay, Philippines 4500</span>
+                        </div>
+                        <div class="footer-contact-item">
+                            <i class="fab fa-facebook-f footer-contact-icon"></i>
+                            <a href="https://web.facebook.com/STICollegeLegazpiCollegeStudentCouncil" target="_blank" class="footer-contact-text" style="color:#94a3b8;text-decoration:none;">CSC STI College Legazpi</a>
+                        </div>
+                        <div class="footer-contact-item">
+                            <i class="fab fa-tiktok footer-contact-icon"></i>
+                            <a href="https://www.tiktok.com/@csc_stilegazpi" target="_blank" class="footer-contact-text" style="color:#94a3b8;text-decoration:none;">@csc_stilegazpi</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="footer-bottom">
+                    <span class="footer-bottom-text">&copy; 2026 CSC - STI College Legazpi. All rights reserved.</span>
+                    <span class="footer-bottom-badge">Built with Transparency in Mind</span>
+                </div>
+            </footer>
+        `;
+
+        // Nav wiring
+        var navMap = {
+            'faq-nav-home':     function() { self.renderLandingPage(); },
+            'faq-nav-about':    function() { self.renderAbout(); },
+            'faq-nav-contact':  function() { self.renderContactUs(); },
+            'faq-mobile-home':  function() { self.renderLandingPage(); },
+            'faq-mobile-about': function() { self.renderAbout(); },
+            'faq-mobile-contact': function() { self.renderContactUs(); },
+            'faq-footer-home':  function() { self.renderLandingPage(); },
+            'faq-footer-about': function() { self.renderAbout(); },
+            'faq-footer-contact': function() { self.renderContactUs(); },
+            'faq-cta-contact':  function() { self.renderContactUs(); }
+        };
+        Object.keys(navMap).forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) el.addEventListener('click', function(e) { e.preventDefault(); navMap[id](); });
+        });
+
+        var loginBtn = document.getElementById('faq-login-btn');
+        if (loginBtn) {
+            loginBtn.addEventListener('click', function() {
+                self.renderLandingPage();
+                setTimeout(function() {
+                    var dd = document.getElementById('login-dropdown');
+                    if (dd) dd.classList.add('show');
+                }, 50);
+            });
+        }
+
+        // Accordion
+        document.querySelectorAll('.faq-question').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var item = document.getElementById(btn.getAttribute('data-faq'));
+                var isOpen = item.classList.contains('faq-open');
+                document.querySelectorAll('.faq-item.faq-open').forEach(function(open) {
+                    open.classList.remove('faq-open');
+                });
+                if (!isOpen) item.classList.add('faq-open');
+            });
+        });
+
+        // Search
+        var searchInput = document.getElementById('faq-search');
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                var q = this.value.toLowerCase().trim();
+                var anyVisible = false;
+                document.querySelectorAll('.faq-item').forEach(function(item) {
+                    var text = item.querySelector('.faq-question span').textContent.toLowerCase() +
+                               item.querySelector('.faq-answer p').textContent.toLowerCase();
+                    var show = !q || text.includes(q);
+                    item.style.display = show ? '' : 'none';
+                    if (show) anyVisible = true;
+                });
+                document.querySelectorAll('.faq-group').forEach(function(group) {
+                    var hasVisible = Array.from(group.querySelectorAll('.faq-item')).some(function(i) {
+                        return i.style.display !== 'none';
+                    });
+                    group.style.display = hasVisible ? '' : 'none';
+                });
+                document.getElementById('faq-no-results').style.display = anyVisible ? 'none' : 'flex';
             });
         }
     },
