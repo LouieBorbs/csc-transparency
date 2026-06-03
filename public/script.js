@@ -1255,97 +1255,54 @@ var App = {
             <!-- Officers -->
             <section class="about-section about-section-dark">
                 <div class="about-inner">
-                    <div class="about-section-label" style="color:rgba(255,215,0,0.8);">Article VI &amp; XVI</div>
-                    <h2 class="about-section-title" style="color:#fff;">CSC Officers A.Y. 2024</h2>
+                    <div class="about-section-label" style="color:rgba(255,215,0,0.8);">Article VI</div>
+                    <h2 class="about-section-title" style="color:#fff;">CSC Officers &amp; Their Roles</h2>
+                    <p style="color:rgba(255,255,255,0.7);font-size:15px;margin-bottom:28px;max-width:680px;">The officers of the College Student Council are elected by the student body for a term of one academic year through a transparent, fair, and inclusive election process.</p>
                     <div class="about-officers-grid">
                         <div class="about-officer-card about-officer-primary">
+                            <div class="about-officer-icon"><i class="fas fa-crown"></i></div>
                             <div class="about-officer-role">President</div>
-                            <div class="about-officer-name">John Patrick M. Llosala</div>
-                            <div class="about-officer-desc">Chief Executive Officer of the CSC. Leads the organization, represents the student body, and oversees all operations.</div>
+                            <div class="about-officer-desc">Chief Executive Officer of the CSC. Oversees all operations, strategic direction, and serves as the voice of the student body.</div>
                         </div>
                         <div class="about-officer-card about-officer-primary">
+                            <div class="about-officer-icon"><i class="fas fa-user-shield"></i></div>
                             <div class="about-officer-role">Vice-President</div>
-                            <div class="about-officer-name">Reizza Jeanele D. Flestado</div>
-                            <div class="about-officer-desc">Supports the President and assumes leadership in the absence of the President.</div>
+                            <div class="about-officer-desc">Supports the President in all duties and assumes full leadership responsibilities in the absence of the President.</div>
                         </div>
                         <div class="about-officer-card">
+                            <div class="about-officer-icon"><i class="fas fa-pen-alt"></i></div>
                             <div class="about-officer-role">Secretary-General</div>
-                            <div class="about-officer-name">Cyr Jay Lopez</div>
-                            <div class="about-officer-desc">Maintains records, minutes of meetings, and ensures effective communication within the organization.</div>
+                            <div class="about-officer-desc">Maintains accurate records, minutes of all meetings, and ensures effective communication within the organization.</div>
                         </div>
                         <div class="about-officer-card">
+                            <div class="about-officer-icon"><i class="fas fa-coins"></i></div>
                             <div class="about-officer-role">Treasurer</div>
-                            <div class="about-officer-name">Felicity Mae M. Sy</div>
-                            <div class="about-officer-desc">Manages financial affairs, budgeting, reporting, and fundraising activities of the Council.</div>
+                            <div class="about-officer-desc">Manages the financial affairs of the Council, including budgeting, financial reporting, and fundraising activities.</div>
                         </div>
                         <div class="about-officer-card">
+                            <div class="about-officer-icon"><i class="fas fa-search-dollar"></i></div>
                             <div class="about-officer-role">Auditor</div>
-                            <div class="about-officer-name">Luke Simon N. Saronhillo</div>
-                            <div class="about-officer-desc">Ensures financial integrity and compliance; verifies accuracy of financial reports and transactions.</div>
+                            <div class="about-officer-desc">Ensures financial integrity and compliance; examines and verifies all financial reports and transactions of the Council.</div>
                         </div>
                         <div class="about-officer-card">
+                            <div class="about-officer-icon"><i class="fas fa-bullhorn"></i></div>
                             <div class="about-officer-role">Public Information Officer</div>
-                            <div class="about-officer-name">Pualine Loise Ajero</div>
-                            <div class="about-officer-desc">Handles external communications, public relations, and promotion of the Council's activities.</div>
+                            <div class="about-officer-desc">Handles external communications, public relations, and promotion of the Council's activities to the student body and community.</div>
                         </div>
                         <div class="about-officer-card">
-                            <div class="about-officer-role">Business Manager</div>
-                            <div class="about-officer-name">Yvone Q. Cantina</div>
-                            <div class="about-officer-desc">Oversees business-related activities, sponsorships, and partnerships for the Council.</div>
+                            <div class="about-officer-icon"><i class="fas fa-briefcase"></i></div>
+                            <div class="about-officer-role">Business Managers</div>
+                            <div class="about-officer-desc">Oversees business-related activities, sponsorships, and partnerships. Responsible for purchasing, budgeting, and sourcing funds.</div>
                         </div>
                         <div class="about-officer-card">
-                            <div class="about-officer-role">Business Manager</div>
-                            <div class="about-officer-name">Angelie Justine Ll. Mornete</div>
-                            <div class="about-officer-desc">Oversees business-related activities, sponsorships, and partnerships for the Council.</div>
+                            <div class="about-officer-icon"><i class="fas fa-shield-alt"></i></div>
+                            <div class="about-officer-role">Peace Officers</div>
+                            <div class="about-officer-desc">Maintain order and security during all Council events and activities. Enforce rules, ensure student safety, and serve as role models.</div>
                         </div>
                         <div class="about-officer-card">
-                            <div class="about-officer-role">Peace Officer</div>
-                            <div class="about-officer-name">Jade O. Bernal</div>
-                            <div class="about-officer-desc">Maintains order and security during Council events. Enforces rules and provides guidance to students.</div>
-                        </div>
-                        <div class="about-officer-card">
-                            <div class="about-officer-role">Peace Officer</div>
-                            <div class="about-officer-name">Mark Anthony S. Cruz I</div>
-                            <div class="about-officer-desc">Maintains order and security during Council events. Enforces rules and provides guidance to students.</div>
-                        </div>
-                        <div class="about-officer-card">
-                            <div class="about-officer-role">BSAIS Representative</div>
-                            <div class="about-officer-name">Yasmin Elisha A. Siera</div>
-                            <div class="about-officer-desc">Represents BS Information Systems students on the Council.</div>
-                        </div>
-                        <div class="about-officer-card">
-                            <div class="about-officer-role">BSBA Representative</div>
-                            <div class="about-officer-name">Shintarou C. Arai</div>
-                            <div class="about-officer-desc">Represents BS Business Administration students on the Council.</div>
-                        </div>
-                        <div class="about-officer-card">
-                            <div class="about-officer-role">BSCPE Representative</div>
-                            <div class="about-officer-name">Micahel Angelo Vasquez</div>
-                            <div class="about-officer-desc">Represents BS Computer Engineering students on the Council.</div>
-                        </div>
-                        <div class="about-officer-card">
-                            <div class="about-officer-role">BSHM Representative</div>
-                            <div class="about-officer-name">Lupe Austria III</div>
-                            <div class="about-officer-desc">Represents BS Hotel Management students on the Council.</div>
-                        </div>
-                        <div class="about-officer-card">
-                            <div class="about-officer-role">BSIT Representative</div>
-                            <div class="about-officer-name">Justine A. Acuna</div>
-                            <div class="about-officer-desc">Represents BS Information Technology students on the Council.</div>
-                        </div>
-                    </div>
-                    <div class="about-advisers">
-                        <div class="about-adviser-item">
-                            <i class="fas fa-user-tie"></i>
-                            <div><strong>Patrick Celino Maquinana</strong><br><span>CSC Adviser</span></div>
-                        </div>
-                        <div class="about-adviser-item">
-                            <i class="fas fa-chalkboard-teacher"></i>
-                            <div><strong>Maria Diejhey B. Martinez, MIT</strong><br><span>Academic Head — STI College Legazpi</span></div>
-                        </div>
-                        <div class="about-adviser-item">
-                            <i class="fas fa-school"></i>
-                            <div><strong>May Anne V. Revale</strong><br><span>School Administrator — STI College Legazpi</span></div>
+                            <div class="about-officer-icon"><i class="fas fa-user-graduate"></i></div>
+                            <div class="about-officer-role">Departmental Representatives</div>
+                            <div class="about-officer-desc">Serve as liaisons between the Council and their respective academic programs — BSIT, BSCPE, BSBA, BSAIS, and BSHM.</div>
                         </div>
                     </div>
                 </div>

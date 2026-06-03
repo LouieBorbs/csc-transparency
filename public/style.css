@@ -1308,7 +1308,7 @@ body {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 16px;
-    margin-bottom: 36px;
+    margin-bottom: 0;
 }
 .about-officer-card {
     background: rgba(255,255,255,0.08);
@@ -1322,19 +1322,18 @@ body {
     background: rgba(255,215,0,0.12);
     border-color: rgba(255,215,0,0.35);
 }
-.about-officer-role {
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+.about-officer-icon {
+    font-size: 26px;
     color: #FFD700;
-    margin-bottom: 6px;
+    margin-bottom: 12px;
+    text-align: center;
 }
-.about-officer-name {
-    font-size: 15px;
+.about-officer-role {
+    font-size: 14px;
     font-weight: 700;
     color: #fff;
     margin-bottom: 8px;
+    text-align: center;
 }
 .about-officer-desc {
     font-size: 12.5px;
