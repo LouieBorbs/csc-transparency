@@ -3651,7 +3651,7 @@ renderAdminContent: function() {
 
         var html = '<div class="content-actions" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px;">' +
             '<button class="btn btn-primary" id="create-event-btn"><i class="fas fa-plus"></i> Create Event</button>' +
-            '<input type="text" class="form-input" id="event-search" placeholder="Search title, location, category..." style="width:240px;" value="' + (this.currentFilter.eventSearch || '') + '" oninput="App.filterEvents(this.value)">' +
+            '<input type="text" class="form-input" id="event-search" placeholder="Search title, location, category..." style="width:240px;" value="' + (this.currentFilter.eventSearch || '') + '" autocomplete="off">' +
             '<select class="form-input" id="event-status-filter" style="width:160px;" onchange="App.filterEventStatus(this.value)">' +
             '<option value="">All Statuses</option>' +
             '<option value="upcoming"' + (this.currentFilter.eventStatus === 'upcoming' ? ' selected' : '') + '>Upcoming</option>' +
@@ -3727,7 +3727,8 @@ renderAdminContent: function() {
                     '<option value="moved"' + (e.status === 'moved' ? ' selected' : '') + '>Moved</option>' +
                     '</select>';
 
-                html += '<div class="card" style="overflow:hidden;">' +
+                var searchText = [(e.title||''),(e.location||''),(e.category||''),(e.description||''),(e.batch||'')].join(' ').toLowerCase();
+                html += '<div class="card event-card-item" style="overflow:hidden;" data-search-text="' + searchText.replace(/"/g,'') + '">' +
                     '<div class="card-header"><h3 class="card-title">' + (e.title || '') + '</h3>' +
                     '<span class="badge ' + statusClass + '" style="font-size:11px;">' + statusLabel + '</span></div>' +
                     '<div class="card-body">' +
@@ -9548,12 +9549,29 @@ eventForm.addEventListener('submit', function(e) {
         var eventBatchFilter = document.getElementById('event-batch-filter');
         
         if (eventSearch) {
-            eventSearch.value = self.currentFilter.eventSearch || '';
+            // Restore any active search value
+            if (self.currentFilter.eventSearch) eventSearch.value = self.currentFilter.eventSearch;
             if (!eventSearch.listenerAttached) {
                 eventSearch.listenerAttached = true;
                 eventSearch.addEventListener('input', function() {
+                    var q = this.value.toLowerCase().trim();
                     self.currentFilter.eventSearch = this.value;
-                    self.renderAdminDashboard();
+                    // Filter cards in-place — no re-render, no focus loss
+                    var cards = document.querySelectorAll('.event-card-item');
+                    var anyVisible = false;
+                    cards.forEach(function(card) {
+                        var text = (card.dataset.searchText || '').toLowerCase();
+                        var show = !q || text.indexOf(q) !== -1;
+                        card.style.display = show ? '' : 'none';
+                        if (show) anyVisible = true;
+                    });
+                    // Show/hide no-results message
+                    var emptyState = document.querySelector('.empty-state');
+                    if (emptyState) emptyState.style.display = (cards.length && !anyVisible) ? 'block' : 'none';
+                });
+                // Keep search value on focus so clicking doesn't clear it
+                eventSearch.addEventListener('focus', function() {
+                    this.select();
                 });
             }
         }
