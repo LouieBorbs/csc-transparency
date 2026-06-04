@@ -3821,10 +3821,6 @@ renderAdminContent: function() {
             batchOpts += '<option value="' + yr + ' - 2nd Semester">' + yr + ' — 2nd Semester</option>';
         });
 
-        // Build year options (current year ± 3)
-        var yearOpts = '<option value="">Year</option>';
-        for (var y = cy - 1; y <= cy + 4; y++) yearOpts += '<option value="' + y + '">' + y + '</option>';
-
         return '<div id="event-modal" class="modal" style="display:none;align-items:center;justify-content:center;" onclick="if(event.target === this) this.style.display=\'none\'">' +
             '<div class="modal-content" style="max-width:620px;margin:auto;max-height:90vh;overflow-y:auto;">' +
                 '<div class="modal-header"><h3>Create Event</h3><button type="button" class="modal-close" id="close-event-modal" onclick="document.getElementById(\'event-modal\').style.display=\'none\'">&times;</button></div>' +
@@ -3833,65 +3829,54 @@ renderAdminContent: function() {
                 // Title
                 '<div class="form-group"><label class="form-label">Title *</label><input type="text" class="form-input" id="event-title" required></div>' +
 
-                // Category — Other reveals specify field
+                // Category
                 '<div class="form-group"><label class="form-label">Category *</label>' +
                 '<select class="form-input" id="event-category-select" onchange="var s=document.getElementById(\'event-category-specify-wrap\');if(s)s.style.display=this.value===\'Other\'?\'block\':\'none\';" required>' +
                 '<option value="">Select Category</option>' +
-                '<option value="Seminar">Seminar</option>' +
-                '<option value="Workshop">Workshop</option>' +
-                '<option value="Meeting">Meeting</option>' +
-                '<option value="Conference">Conference</option>' +
-                '<option value="Social">Social</option>' +
-                '<option value="Sports">Sports</option>' +
+                '<option value="Seminar">Seminar</option><option value="Workshop">Workshop</option>' +
+                '<option value="Meeting">Meeting</option><option value="Conference">Conference</option>' +
+                '<option value="Social">Social</option><option value="Sports">Sports</option>' +
                 '<option value="Other">Other</option>' +
                 '</select>' +
                 '<div id="event-category-specify-wrap" style="display:none;margin-top:8px;">' +
                 '<input type="text" class="form-input" id="event-category-specify" placeholder="Please specify category"></div></div>' +
 
-                // Status — defaults to Upcoming for new events
-                '<div class="form-group"><label class="form-label">Status *</label>' +
-                '<select class="form-input" id="event-status" required>' +
-                '<option value="upcoming" selected>Upcoming</option>' +
-                '<option value="finished">Finished</option>' +
-                '<option value="cancelled">Cancelled</option>' +
-                '<option value="moved">Moved</option>' +
+                // Status — hidden on CREATE (auto = upcoming), shown on EDIT
+                '<div id="event-status-group" style="display:none;" class="form-group"><label class="form-label">Status</label>' +
+                '<select class="form-input" id="event-status">' +
+                '<option value="upcoming">Upcoming</option><option value="finished">Finished</option>' +
+                '<option value="cancelled">Cancelled</option><option value="moved">Moved</option>' +
                 '</select></div>' +
 
-                // Batch / Semester — dynamic from student data
+                // Batch / Semester
                 '<div class="form-group"><label class="form-label">Batch / Semester *</label>' +
                 '<select class="form-input" id="event-batch" required>' + batchOpts + '</select></div>' +
 
-                // Date (Year / Month / Day)
-                '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">' +
-                '<div class="form-group"><label class="form-label">Year *</label>' +
-                '<select class="form-input" id="event-year" onchange="App.updateEventDays()" required>' + yearOpts + '</select></div>' +
-                '<div class="form-group"><label class="form-label">Month *</label>' +
-                '<select class="form-input" id="event-month" onchange="App.updateEventDays()" required>' +
-                '<option value="">Month</option>' +
-                '<option value="01">January</option><option value="02">February</option><option value="03">March</option>' +
-                '<option value="04">April</option><option value="05">May</option><option value="06">June</option>' +
-                '<option value="07">July</option><option value="08">August</option><option value="09">September</option>' +
-                '<option value="10">October</option><option value="11">November</option><option value="12">December</option>' +
-                '</select></div>' +
-                '<div class="form-group"><label class="form-label">Day *</label>' +
-                '<select class="form-input" id="event-day" required><option value="">Day</option></select></div></div>' +
+                // Date — calendar picker (future dates only)
+                '<div class="form-group"><label class="form-label">Date *</label>' +
+                '<div id="event-date-picker-container" style="position:relative;">' +
+                '<input type="text" class="form-input" id="event-date-display" readonly placeholder="Click to select event date" style="cursor:pointer;background:var(--bg-white);" required>' +
+                '<input type="hidden" id="event-date-value">' +
+                '<div id="event-date-calendar" style="display:none;position:absolute;z-index:300;background:var(--bg-white);border:1px solid var(--border-color);border-radius:10px;padding:14px;box-shadow:0 6px 20px rgba(0,0,0,0.18);width:310px;margin-top:4px;">' +
+                    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">' +
+                        '<button type="button" id="evt-cal-prev" style="background:none;border:none;cursor:pointer;font-size:18px;padding:4px 10px;color:var(--text-light);">&#10094;</button>' +
+                        '<div style="display:flex;gap:6px;align-items:center;">' +
+                            '<span id="evt-cal-month" style="font-weight:700;font-size:14px;cursor:pointer;padding:4px 8px;border-radius:6px;"></span>' +
+                            '<span id="evt-cal-year"  style="font-weight:700;font-size:14px;cursor:pointer;padding:4px 8px;border-radius:6px;"></span>' +
+                        '</div>' +
+                        '<button type="button" id="evt-cal-next" style="background:none;border:none;cursor:pointer;font-size:18px;padding:4px 10px;color:var(--text-light);">&#10095;</button>' +
+                    '</div>' +
+                    '<div style="display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:11px;font-weight:600;color:var(--text-light);margin-bottom:6px;">' +
+                        '<div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>' +
+                    '</div>' +
+                    '<div id="evt-cal-days" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;"></div>' +
+                '</div>' +
+                '</div></div>' +
 
-                // Time — clean Hour / Minute / AM-PM selects
+                // Time — native clock picker
                 '<div class="form-group"><label class="form-label">Time *</label>' +
-                '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">' +
-                '<select class="form-input" id="event-time-hour" required>' +
-                '<option value="">Hour</option>' +
-                '<option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option>' +
-                '<option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option>' +
-                '<option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option>' +
-                '</select>' +
-                '<select class="form-input" id="event-time-min" required>' +
-                '<option value="">Min</option>' +
-                '<option value="00">:00</option><option value="15">:15</option><option value="30">:30</option><option value="45">:45</option>' +
-                '</select>' +
-                '<select class="form-input" id="event-time-ampm" required>' +
-                '<option value="">AM/PM</option><option value="AM">AM</option><option value="PM">PM</option>' +
-                '</select></div></div>' +
+                '<input type="time" class="form-input" id="event-time" required style="cursor:pointer;">' +
+                '<span style="font-size:11px;color:var(--text-light);margin-top:4px;display:block;"><i class="fas fa-clock"></i> Click to open clock picker</span></div>' +
 
                 // Location + Description
                 '<div class="form-group"><label class="form-label">Location *</label><input type="text" class="form-input" id="event-location" required></div>' +
@@ -3905,8 +3890,8 @@ renderAdminContent: function() {
                 '<div class="file-preview" id="event-media-preview" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;"></div></div>' +
                 '<input type="file" id="event-media-input" accept="image/*,video/*" multiple style="display:none;"></div>' +
 
-                // Evaluation link only (no checkbox)
-                '<div class="form-group"><label class="form-label">Evaluation Form Link <span style="font-size:11px;color:var(--text-light);font-weight:normal;">(Optional — paste Google Form URL)</span></label>' +
+                // Evaluation link
+                '<div class="form-group"><label class="form-label">Evaluation Form Link <span style="font-size:11px;color:var(--text-light);font-weight:normal;">(Optional)</span></label>' +
                 '<input type="url" class="form-input" id="event-evaluation-link" placeholder="https://docs.google.com/forms/..."></div>' +
 
                 '<div class="modal-actions"><button type="submit" class="btn btn-primary" id="event-submit-btn">Create Event</button></div>' +
@@ -7697,9 +7682,21 @@ var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:
                     document.getElementById('event-title').value = event.title || '';
                     document.getElementById('event-location').value = event.location || '';
                     document.getElementById('event-description').value = event.description || '';
-                    if (document.getElementById('event-status')) document.getElementById('event-status').value = event.status || 'upcoming';
-                    if (document.getElementById('event-batch')) document.getElementById('event-batch').value = event.batch || '';
                     if (document.getElementById('event-evaluation-link')) document.getElementById('event-evaluation-link').value = event.evaluationLink || '';
+                    if (document.getElementById('event-batch')) document.getElementById('event-batch').value = event.batch || '';
+
+                    // Show status group in edit mode
+                    var sg = document.getElementById('event-status-group');
+                    if (sg) sg.style.display = 'block';
+                    if (document.getElementById('event-status')) document.getElementById('event-status').value = event.status || 'upcoming';
+
+                    // Set date display + hidden value
+                    if (event.date) {
+                        var dp = event.date.split('-');
+                        var mNms = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+                        if (document.getElementById('event-date-display')) document.getElementById('event-date-display').value = mNms[parseInt(dp[1])-1] + ' ' + parseInt(dp[2]) + ', ' + dp[0];
+                        if (document.getElementById('event-date-value')) document.getElementById('event-date-value').value = event.date;
+                    }
 
                     // Load category — handle "Other (specify)" case
                     var catSelect = document.getElementById('event-category-select');
@@ -7737,18 +7734,15 @@ var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:
                         }
                     }
 
-                    // Load time into hour/min/ampm selects
-                    if (event.time) {
-                        var timeParts = event.time.split(' '); // "8:30 AM" or "08:30"
-                        var hmParts = timeParts[0].split(':');
-                        var hVal = parseInt(hmParts[0]);
-                        var mVal = hmParts[1] ? hmParts[1].substring(0,2) : '00';
-                        var ampm = timeParts[1] || (hVal >= 12 ? 'PM' : 'AM');
-                        if (!timeParts[1] && hVal > 12) { hVal = hVal - 12; } // convert 24h
-                        if (!timeParts[1] && hVal === 0) { hVal = 12; }
-                        if (document.getElementById('event-time-hour')) document.getElementById('event-time-hour').value = String(hVal);
-                        if (document.getElementById('event-time-min'))  document.getElementById('event-time-min').value  = mVal;
-                        if (document.getElementById('event-time-ampm')) document.getElementById('event-time-ampm').value = ampm;
+                    // Load time into type="time" input (needs 24-hour HH:MM format)
+                    if (event.time && document.getElementById('event-time')) {
+                        var tp = event.time.split(' '); // "8:30 AM" or "14:30"
+                        var hm = tp[0].split(':');
+                        var h24 = parseInt(hm[0]);
+                        var mn  = hm[1] ? hm[1].substring(0,2) : '00';
+                        if (tp[1] === 'PM' && h24 < 12) h24 += 12;
+                        if (tp[1] === 'AM' && h24 === 12) h24 = 0;
+                        document.getElementById('event-time').value = String(h24).padStart(2,'0') + ':' + mn;
                     }
 
                     if (event.mediaGallery && event.mediaGallery.length > 0) {
@@ -8860,51 +8854,96 @@ var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:
                 document.getElementById('event-submit-btn').textContent = 'Create Event';
                 document.querySelector('.modal-header h3').textContent = 'Create Event';
                 eventForm.reset();
-                
-                // Clear day options
-                var daySelect = document.getElementById('event-day');
-                if (daySelect) {
-                    daySelect.innerHTML = '<option value="">Day</option>';
-                }
-                
+                // Hide status on create; reset date display
+                var sg = document.getElementById('event-status-group');
+                if (sg) sg.style.display = 'none';
+                var dd = document.getElementById('event-date-display');
+                if (dd) dd.value = '';
+                var dv = document.getElementById('event-date-value');
+                if (dv) dv.value = '';
+                var cw = document.getElementById('event-category-specify-wrap');
+                if (cw) cw.style.display = 'none';
                 eventModal.style.display = 'flex';
+                setupEventDateCalendar();
             });
         }
 
-        // Event Date - Year/Month/Day dropdown population
-        var eventYear = document.getElementById('event-year');
-        var eventMonth = document.getElementById('event-month');
-        var eventDay = document.getElementById('event-day');
-        
-        if (eventYear) {
-            eventYear.addEventListener('change', function() {
-                updateEventDays();
-            });
-        }
-        if (eventMonth) {
-            eventMonth.addEventListener('change', function() {
-                updateEventDays();
-            });
-        }
-        
-        function updateEventDays() {
-            var year = document.getElementById('event-year') ? document.getElementById('event-year').value : '';
-            var month = document.getElementById('event-month') ? document.getElementById('event-month').value : '';
-            var daySelect = document.getElementById('event-day');
-            
-            if (!daySelect) return;
-            
-            daySelect.innerHTML = '<option value="">Day</option>';
-            
-            if (year && month) {
-                var daysInMonth = new Date(parseInt(year), parseInt(month), 0).getDate();
-                for (var d = 1; d <= daysInMonth; d++) {
-                    var option = document.createElement('option');
-                    option.value = d;
-                    option.textContent = d;
-                    daySelect.appendChild(option);
+        // Event date calendar picker (future-only)
+        function setupEventDateCalendar() {
+            var dateDisplay = document.getElementById('event-date-display');
+            var dateCalendar = document.getElementById('event-date-calendar');
+            var dateValue = document.getElementById('event-date-value');
+            if (!dateDisplay || !dateCalendar) return;
+            if (dateCalendar.dataset.calSetup) return; // prevent re-init
+            dateCalendar.dataset.calSetup = '1';
+
+            var todayEvt = new Date(); todayEvt.setHours(0,0,0,0);
+            var evtMonth = todayEvt.getMonth();
+            var evtYear  = todayEvt.getFullYear();
+            var mNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+            function renderEvtCal(month, year) {
+                var mEl = document.getElementById('evt-cal-month');
+                var yEl = document.getElementById('evt-cal-year');
+                var prevBtn = document.getElementById('evt-cal-prev');
+                var nextBtn = document.getElementById('evt-cal-next');
+                var daysEl = document.getElementById('evt-cal-days');
+                if (!daysEl) return;
+                if (mEl) mEl.textContent = mNames[month];
+                if (yEl) yEl.textContent = year;
+                if (prevBtn) prevBtn.disabled = (year === todayEvt.getFullYear() && month <= todayEvt.getMonth());
+                daysEl.innerHTML = '';
+                var firstDay = new Date(year, month, 1).getDay();
+                var daysInMonth = new Date(year, month + 1, 0).getDate();
+                for (var i = 0; i < firstDay; i++) daysEl.appendChild(document.createElement('div'));
+                for (var day = 1; day <= daysInMonth; day++) {
+                    (function(d, m, y) {
+                        var el = document.createElement('div');
+                        el.textContent = d;
+                        el.style.cssText = 'padding:6px 4px;border-radius:5px;font-size:13px;text-align:center;';
+                        var thisDate = new Date(y, m, d);
+                        if (thisDate < todayEvt) {
+                            el.style.color = 'var(--text-light)';
+                            el.style.opacity = '0.3';
+                            el.style.cursor = 'not-allowed';
+                        } else {
+                            el.style.cursor = 'pointer';
+                            el.addEventListener('click', function() {
+                                var ds = y + '-' + String(m+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+                                if (dateValue) dateValue.value = ds;
+                                dateDisplay.value = mNames[m] + ' ' + d + ', ' + y;
+                                dateCalendar.style.display = 'none';
+                            });
+                            el.addEventListener('mouseenter', function() { this.style.background = 'var(--primary-color)'; this.style.color = '#fff'; });
+                            el.addEventListener('mouseleave', function() { this.style.background = ''; this.style.color = ''; });
+                        }
+                        daysEl.appendChild(el);
+                    })(day, month, year);
                 }
             }
+
+            dateDisplay.addEventListener('click', function(e) {
+                e.stopPropagation();
+                dateCalendar.style.display = dateCalendar.style.display === 'none' ? 'block' : 'none';
+                if (dateCalendar.style.display === 'block') renderEvtCal(evtMonth, evtYear);
+            });
+
+            var prevBtn = document.getElementById('evt-cal-prev');
+            var nextBtn = document.getElementById('evt-cal-next');
+            if (prevBtn) prevBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                evtMonth--; if (evtMonth < 0) { evtMonth = 11; evtYear--; }
+                renderEvtCal(evtMonth, evtYear);
+            });
+            if (nextBtn) nextBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                evtMonth++; if (evtMonth > 11) { evtMonth = 0; evtYear++; }
+                renderEvtCal(evtMonth, evtYear);
+            });
+
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('#event-date-picker-container')) dateCalendar.style.display = 'none';
+            });
         }
         
         // Calendar Navigation
@@ -8967,28 +9006,22 @@ var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:
             eventForm.dataset.listenerAttached = 'true';
 eventForm.addEventListener('submit', function(e) {
                 e.preventDefault();
-                var title = document.getElementById('event-title').value;
-                var batch = document.getElementById('event-batch').value;
-                var year = document.getElementById('event-year').value;
-                var month = document.getElementById('event-month').value;
-                var day = document.getElementById('event-day').value;
-                var time = document.getElementById('event-time').value;
-                var location = document.getElementById('event-location').value;
-                
-                var tHour = document.getElementById('event-time-hour') ? document.getElementById('event-time-hour').value : time;
-                var tAmpm = document.getElementById('event-time-ampm') ? document.getElementById('event-time-ampm').value : 'AM';
-                if (!title || !batch || !year || !month || !day || !tHour || !tAmpm || !location) {
-                    alert('Please fill in all required fields (including time)');
+                var title    = document.getElementById('event-title').value.trim();
+                var batch    = document.getElementById('event-batch').value;
+                var date     = document.getElementById('event-date-value') ? document.getElementById('event-date-value').value : '';
+                var time     = document.getElementById('event-time').value;
+                var location = document.getElementById('event-location').value.trim();
+
+                if (!title || !batch || !date || !time || !location) {
+                    alert('Please fill in all required fields (Title, Batch, Date, Time, Location)');
                     return;
                 }
-                
-                var date = year + '-' + month + '-' + (String(day).length === 1 ? '0' + day : day);
 
-                // Time from three selects
-                var timeHour = document.getElementById('event-time-hour') ? document.getElementById('event-time-hour').value : '';
-                var timeMin  = document.getElementById('event-time-min')  ? document.getElementById('event-time-min').value  : '00';
-                var timeAmpm = document.getElementById('event-time-ampm') ? document.getElementById('event-time-ampm').value : '';
-                var time = (timeHour && timeAmpm) ? timeHour + ':' + (timeMin || '00') + ' ' + timeAmpm : time;
+                // Format time for display: "14:30" → "2:30 PM"
+                var timeParts = time.split(':');
+                var th = parseInt(timeParts[0]), tm = timeParts[1] || '00';
+                var timeDisplay = (th === 0 ? 12 : th > 12 ? th - 12 : th) + ':' + tm + ' ' + (th >= 12 ? 'PM' : 'AM');
+                time = timeDisplay;
 
                 var categorySelect = document.getElementById('event-category-select') ? document.getElementById('event-category-select').value : '';
                 var categorySpecify = document.getElementById('event-category-specify') ? document.getElementById('event-category-specify').value.trim() : '';
