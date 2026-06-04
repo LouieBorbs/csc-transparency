@@ -8830,7 +8830,7 @@ var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:
                 });
             });
 
-            // Comment forms on student feed are handled by the shared admin handler above
+            // Comment forms handled by shared handler above (comment-form class)
 
             // Vote Polls
             document.querySelectorAll('[data-action="vote-poll"]').forEach(function(btn) {
@@ -9511,11 +9511,14 @@ eventForm.addEventListener('submit', function(e) {
                 var content = (input ? input.value : '').trim();
                 var announcementId = form.dataset.announcementId;
                 var parentId = form.dataset.parentId;
-                var commenterName = form.dataset.commenter || '';
                 if (!content || !announcementId || !parentId) return;
-                if (!self.data.comments) self.data.comments = [];
                 var parentNumericId = parseInt(parentId);
-                if (isNaN(parentNumericId)) { alert('Comment not yet synced — please wait a moment and try again.'); return; }
+                if (isNaN(parentNumericId)) {
+                    // Comment not yet synced to Supabase — wait briefly and re-render
+                    alert('Please wait a moment for the comment to sync, then try replying again.');
+                    return;
+                }
+                if (!self.data.comments) self.data.comments = [];
                 var newReply = {
                     postId: parentNumericId,
                     postType: 'reply',
@@ -9524,32 +9527,10 @@ eventForm.addEventListener('submit', function(e) {
                     content: content,
                     date: new Date().toISOString()
                 };
-                if (!self.data.comments) self.data.comments = [];
                 self.data.comments.push(newReply);
                 self.saveData();
-
-                // Inject reply bubble above the reply input div
-                var replyInputDiv = document.getElementById('reply-input-' + parentId);
-                var cu = self.currentUser;
-                var cName = cu ? (cu.name || cu.email) : 'Admin';
-                var rBg = 'var(--primary-color)';
-                var bubble = document.createElement('div');
-                bubble.style.cssText = 'display:flex;gap:8px;align-items:flex-start;margin-top:6px;margin-left:42px;';
-                bubble.innerHTML = '<div style="width:28px;height:28px;border-radius:50%;background:' + rBg + ';color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;">' + cName.charAt(0).toUpperCase() + '</div>' +
-                    '<div style="background:var(--bg-white);border-radius:12px;padding:7px 11px;flex:1;box-shadow:0 1px 2px rgba(0,0,0,0.06);">' +
-                    '<div style="font-size:12px;font-weight:700;">' + cName + ' <span style="font-size:10px;color:var(--primary-color);">(Admin)</span></div>' +
-                    '<div style="font-size:13px;margin-top:1px;">' + content + '</div>' +
-                    '<div style="font-size:11px;color:var(--text-light);margin-top:3px;">' + self.formatPostDate(null, newReply.date) + '</div>' +
-                    '</div>';
-                if (replyInputDiv && replyInputDiv.parentNode) {
-                    replyInputDiv.parentNode.insertBefore(bubble, replyInputDiv);
-                }
-                // Hide the reply input and update comment count
-                if (replyInputDiv) replyInputDiv.style.display = 'none';
-                var total = (self.data.comments || []).filter(function(cm) { return Number(cm.postId) === Number(announcementId) && cm.postType === 'announcement'; }).length;
-                var countBtn = document.querySelector('.admin-toggle-comments[data-id="' + announcementId + '"]');
-                if (countBtn) countBtn.innerHTML = '<i class="fas fa-comment"></i> ' + total + ' Comment' + (total !== 1 ? 's' : '');
-                if (input) input.value = '';
+                // Re-render so the reply appears with correct IDs and Reply buttons
+                self.renderAdminDashboard();
             });
         });
 
@@ -9563,7 +9544,7 @@ eventForm.addEventListener('submit', function(e) {
             });
         });
 
-        // Admin: comment-form submit (same handler as student but for admin dashboard)
+        // Comment form submit — works for both admin feed and student feed
         document.querySelectorAll('.comment-form').forEach(function(form) {
             if (form.classList.contains('listener-attached')) return;
             form.classList.add('listener-attached');
@@ -9575,66 +9556,27 @@ eventForm.addEventListener('submit', function(e) {
                 if (!content || !announcementId) return;
                 var ann = self.data.announcements.find(function(a) { return String(a.id) === String(announcementId); });
                 var annNumericId = ann ? parseInt(ann.id) : NaN;
-                if (!ann || isNaN(annNumericId)) { alert('Post not yet saved — please wait a moment and try again.'); return; }
-                var newComment = {
+                if (!ann || isNaN(annNumericId)) {
+                    alert('Post not yet synced — please wait a moment and try again.');
+                    return;
+                }
+                if (!self.data.comments) self.data.comments = [];
+                self.data.comments.push({
                     postId: annNumericId,
                     postType: 'announcement',
                     authorId: parseInt(self.currentUser.id) || 0,
                     authorName: self.currentUser.name || self.currentUser.email || 'Unknown',
                     content: content,
                     date: new Date().toISOString()
-                };
-                if (!self.data.comments) self.data.comments = [];
-                self.data.comments.push(newComment);
+                });
                 self.saveData();
-                // Inject bubble in-place — works for both admin (admin-comments-X) and student (comments-X)
-                var section = document.getElementById('admin-comments-' + announcementId) ||
-                              document.getElementById('comments-' + announcementId);
-                var cu = self.currentUser;
-                var cName = cu ? (cu.name || cu.email) : 'Unknown';
-                var isAdmin = cu && (cu.role === 'admin' || cu.adminRole);
-                var initial = cName.charAt(0).toUpperCase();
-                var bgColor = isAdmin ? 'var(--primary-color)' : '#64748b';
-
-                if (section) {
-                    section.style.display = 'block';
-                    var inputRow = form.closest('div');
-                    var bubble = document.createElement('div');
-                    var nowStr = self.formatPostDate(null, newComment.date);
-                    // Admin feed bubble style
-                    if (section.id.indexOf('admin-comments-') === 0) {
-                        bubble.style.cssText = 'display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;';
-                        bubble.innerHTML = '<div style="width:32px;height:32px;border-radius:50%;background:' + bgColor + ';color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;">' + initial + '</div>' +
-                            '<div style="background:var(--bg-white);border-radius:14px;padding:8px 12px;flex:1;box-shadow:0 1px 2px rgba(0,0,0,0.06);">' +
-                            '<div style="font-size:12px;font-weight:700;">' + cName + (isAdmin ? ' <span style="font-size:10px;color:var(--primary-color);">(Admin)</span>' : '') + '</div>' +
-                            '<div style="font-size:13px;margin-top:2px;">' + content + '</div>' +
-                            '<div style="font-size:11px;color:var(--text-light);margin-top:4px;">' + nowStr + '</div>' +
-                            '</div>';
-                    } else {
-                        // Student feed bubble style (fb-comment)
-                        bubble.className = 'fb-comment';
-                        bubble.innerHTML = '<div class="fb-comment-avatar" style="background:' + bgColor + ';">' + initial + '</div>' +
-                            '<div class="fb-comment-bubble">' +
-                            '<div class="fb-comment-author">' + cName + (isAdmin ? ' <span style="font-size:10px;color:var(--primary-color);">(Admin)</span>' : '') + '</div>' +
-                            '<div class="fb-comment-text">' + content + '</div>' +
-                            '<div style="font-size:11px;color:var(--text-light);margin-top:3px;">' + nowStr + '</div>' +
-                            '</div>';
-                    }
-                    section.insertBefore(bubble, inputRow);
-
-                    // Update counters
-                    var total = (self.data.comments || []).filter(function(cm) { return Number(cm.postId) === Number(announcementId) && cm.postType === 'announcement'; }).length;
-                    var adminBtn = document.querySelector('.admin-toggle-comments[data-id="' + announcementId + '"]');
-                    if (adminBtn) adminBtn.innerHTML = '<i class="fas fa-comment"></i> ' + total + ' Comment' + (total !== 1 ? 's' : '');
-                    var post = section.closest('.fb-post');
-                    if (post) {
-                        var countEl = post.querySelector('.fb-engagement-comments');
-                        if (countEl) countEl.textContent = total + ' comment' + (total !== 1 ? 's' : '');
-                        var engBar = post.querySelector('.fb-engagement-bar');
-                        if (engBar) engBar.style.display = '';
-                    }
+                // Re-render to show the new comment with a Reply button and correct IDs
+                var isAdminUser = self.currentUser && (self.currentUser.role === 'admin' || self.currentUser.adminRole);
+                if (isAdminUser) {
+                    self.renderAdminDashboard();
+                } else {
+                    self.renderStudentDashboard();
                 }
-                if (input) input.value = '';
             });
         });
 
