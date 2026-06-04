@@ -3934,12 +3934,15 @@ renderAdminContent: function() {
             var noResults = searchQuery || sortBy !== 'date-desc' ? 'No announcements match your search' : 'No announcements';
             html += '<div class="empty-state"><div class="empty-icon"><i class="fas fa-bullhorn"></i></div><h3 class="empty-title">' + noResults + '</h3></div>';
         } else {
+            if (!self.data.comments) self.data.comments = [];
             html += '<div class="newsfeed">';
             for (var i = 0; i < announcements.length; i++) {
                 var a = announcements[i];
                 var likesCount = a.likes ? a.likes.length : 0;
+                var postComments = (self.data.comments || []).filter(function(c) { return String(c.announcementId) === String(a.id); });
+
                 html += '<div class="newsfeed-item" style="background:var(--bg-white);border-radius:var(--radius-md);border:1px solid var(--border-color);margin-bottom:16px;overflow:hidden;">';
-                
+
                 if (a.image) {
                     html += '<div style="cursor:pointer;" onclick="App.viewImage(\'' + a.image + '\')">' +
                         '<img src="' + a.image + '" style="width:100%;max-height:300px;object-fit:cover;"></div>';
@@ -3947,28 +3950,66 @@ renderAdminContent: function() {
                 if (a.video) {
                     html += '<div style="padding:16px;background:#333;"><video controls style="width:100%;max-height:300px;"><source src="' + a.video + '"></video></div>';
                 }
-                
+
                 html += '<div style="padding:16px;">' +
                     '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">' +
-                    '<div class="profile-avatar" style="width:40px;height:40px;font-size:16px;"><i class="fas fa-school"></i></div>' +
-                    '<div><div style="font-weight:600;font-size:15px;">CSC Administration</div>' +
-                    '<div style="font-size:12px;color:var(--text-light);">' + a.date + (a.pinned ? ' <span class="badge badge-warning">Pinned</span>' : '') + '</div></div></div>' +
-                    '<h3 style="font-size:18px;font-weight:600;margin-bottom:8px;">' + a.title + '</h3>' +
-                    '<p style="font-size:14px;line-height:1.6;margin-bottom:12px;">' + a.content + '</p>';
-                
+                    '<img src="csc-logo.jpeg" style="width:42px;height:42px;border-radius:50%;object-fit:cover;border:1px solid var(--border-color);flex-shrink:0;">' +
+                    '<div><div style="font-weight:700;font-size:15px;">CSC — STI College Legazpi' + (a.pinned ? ' <span class="badge badge-warning" style="font-size:11px;margin-left:6px;"><i class="fas fa-thumbtack"></i> Pinned</span>' : '') + '</div>' +
+                    '<div style="font-size:12px;color:var(--text-light);"><i class="fas fa-globe-asia" style="font-size:10px;"></i> ' + a.date + '</div></div></div>' +
+                    '<h3 style="font-size:17px;font-weight:700;margin-bottom:6px;">' + a.title + '</h3>' +
+                    '<p style="font-size:14px;line-height:1.65;margin-bottom:12px;white-space:pre-wrap;">' + a.content + '</p>';
+
                 if (a.attachments && a.attachments.length > 0) {
                     html += '<div style="margin-bottom:12px;"><strong>Attachments:</strong><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">';
                     a.attachments.forEach(function(att) {
-                        html += '<div class="file-item" style="padding:8px 12px;background:var(--bg-color);border-radius:6px;display:flex;align-items:center;gap:8px;">' +
-                            '<i class="fas fa-file"></i><span>' + att.name + '</span></div>';
+                        html += '<div style="padding:8px 12px;background:var(--bg-color);border-radius:6px;display:flex;align-items:center;gap:8px;font-size:13px;">' +
+                            '<i class="fas fa-file-alt"></i><span>' + att.name + '</span></div>';
                     });
                     html += '</div></div>';
                 }
-                
-                html += '<div style="display:flex;gap:8px;align-items:center;border-top:1px solid var(--border-color);padding-top:12px;margin-top:12px;">' +
+
+                // Engagement counts
+                if (likesCount > 0 || postComments.length > 0) {
+                    html += '<div style="display:flex;align-items:center;padding:8px 0;font-size:13px;color:var(--text-light);border-top:1px solid var(--border-color);margin-top:8px;">';
+                    if (likesCount > 0) html += '<span><i class="fas fa-thumbs-up" style="color:#1877f2;"></i> ' + likesCount + '</span>';
+                    if (postComments.length > 0) html += '<span style="margin-left:auto;">' + postComments.length + ' comment' + (postComments.length !== 1 ? 's' : '') + '</span>';
+                    html += '</div>';
+                }
+
+                // Action bar
+                html += '<div style="display:flex;gap:6px;align-items:center;border-top:1px solid var(--border-color);padding-top:10px;margin-top:8px;flex-wrap:wrap;">' +
                     '<button class="btn btn-' + (likesCount > 0 ? 'success' : 'secondary') + ' btn-sm"><i class="fas fa-thumbs-up"></i> ' + likesCount + ' Likes</button>' +
-                    '<button class="btn btn-secondary btn-sm" data-action="pin-announcement" data-id="' + a.id + '">' + (a.pinned ? 'Unpin' : 'Pin') + '</button>' +
-                    '<button class="btn btn-danger btn-sm" data-action="delete-announcement" data-id="' + a.id + '">Delete</button></div></div></div>';
+                    '<button class="btn btn-secondary btn-sm admin-toggle-comments" data-id="' + a.id + '"><i class="fas fa-comment"></i> ' + postComments.length + ' Comments</button>' +
+                    '<button class="btn btn-secondary btn-sm" data-action="pin-announcement" data-id="' + a.id + '">' + (a.pinned ? '<i class="fas fa-thumbtack"></i> Unpin' : '<i class="fas fa-thumbtack"></i> Pin') + '</button>' +
+                    '<button class="btn btn-danger btn-sm" data-action="delete-announcement" data-id="' + a.id + '"><i class="fas fa-trash"></i> Delete</button>' +
+                    '</div>';
+
+                // Comments section
+                html += '<div id="admin-comments-' + a.id + '" style="display:' + (postComments.length > 0 ? 'block' : 'none') + ';margin-top:12px;padding:12px;background:var(--bg-color);border-radius:8px;">';
+
+                postComments.forEach(function(c) {
+                    var cu = (self.data.users || []).find(function(u) { return u.email === c.email; });
+                    var cName = cu ? cu.name : c.email;
+                    var isAdmin = cu && (cu.role === 'admin' || cu.adminRole);
+                    html += '<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;">' +
+                        '<div style="width:32px;height:32px;border-radius:50%;background:' + (isAdmin ? 'var(--primary-color)' : '#64748b') + ';color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;">' + cName.charAt(0).toUpperCase() + '</div>' +
+                        '<div style="background:var(--bg-white);border-radius:14px;padding:8px 12px;flex:1;box-shadow:0 1px 2px rgba(0,0,0,0.06);">' +
+                        '<div style="font-size:12px;font-weight:700;color:var(--text-color);">' + cName + (isAdmin ? ' <span style="font-size:10px;color:var(--primary-color);font-weight:600;">(Admin)</span>' : '') + '</div>' +
+                        '<div style="font-size:13px;color:var(--text-color);margin-top:2px;">' + c.content + '</div>' +
+                        '<div style="font-size:11px;color:var(--text-light);margin-top:4px;">' + c.date + '</div>' +
+                        '</div></div>';
+                });
+
+                // Admin reply input
+                html += '<div style="display:flex;gap:8px;align-items:center;margin-top:8px;">' +
+                    '<div style="width:32px;height:32px;border-radius:50%;background:var(--primary-color);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;">A</div>' +
+                    '<form class="comment-form" data-announcement-id="' + a.id + '" style="display:flex;flex:1;gap:6px;">' +
+                    '<input type="text" class="form-input" placeholder="Reply as Admin..." style="flex:1;font-size:13px;border-radius:20px;padding:8px 14px;" required>' +
+                    '<button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-paper-plane"></i></button>' +
+                    '</form></div>';
+
+                html += '</div>'; // end comments section
+                html += '</div></div>'; // end padding, end newsfeed-item
             }
             html += '</div>';
         }
@@ -8732,55 +8773,7 @@ var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:
                 });
             });
 
-            // Submit Comments — update DOM in-place, no full re-render
-            document.querySelectorAll('.comment-form').forEach(function(form) {
-                if (form.classList.contains('listener-attached')) return;
-                form.classList.add('listener-attached');
-                form.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    var input = form.querySelector('input');
-                    var content = (input ? input.value : '').trim();
-                    var announcementId = form.dataset.announcementId;
-                    if (!content || !announcementId) return;
-                    if (!self.data.comments) self.data.comments = [];
-                    var newComment = {
-                        id: crypto.randomUUID(),
-                        announcementId: announcementId,
-                        email: self.currentUser.email,
-                        content: content,
-                        date: new Date().toISOString().split('T')[0]
-                    };
-                    self.data.comments.push(newComment);
-                    self.saveData();
-                    // Inject new comment bubble before the input row
-                    var section = document.getElementById('comments-' + announcementId);
-                    if (section) {
-                        var inputRow = form.closest('.fb-comment-input-row');
-                        var initial = self.currentUser.name ? self.currentUser.name.charAt(0).toUpperCase() : '?';
-                        var bubble = document.createElement('div');
-                        bubble.className = 'fb-comment';
-                        bubble.innerHTML = '<div class="fb-comment-avatar fb-my-avatar">' + initial + '</div>' +
-                            '<div class="fb-comment-bubble">' +
-                            '<div class="fb-comment-author">' + (self.currentUser.name || self.currentUser.email) + '</div>' +
-                            '<div class="fb-comment-text">' + content + '</div>' +
-                            '</div>';
-                        section.insertBefore(bubble, inputRow);
-                        // Update comment count in engagement bar
-                        var post = section.closest('.fb-post');
-                        if (post) {
-                            var countEl = post.querySelector('.fb-engagement-comments');
-                            if (countEl) {
-                                var c = self.data.comments.filter(function(cm) { return String(cm.announcementId) === String(announcementId); }).length;
-                                countEl.textContent = c + ' comment' + (c !== 1 ? 's' : '');
-                                countEl.style.display = '';
-                            }
-                            var engBar = post.querySelector('.fb-engagement-bar');
-                            if (engBar) engBar.style.display = '';
-                        }
-                    }
-                    if (input) input.value = '';
-                });
-            });
+            // Comment forms on student feed are handled by the shared admin handler above
 
             // Vote Polls
             document.querySelectorAll('[data-action="vote-poll"]').forEach(function(btn) {
@@ -9430,6 +9423,84 @@ eventForm.addEventListener('submit', function(e) {
                 }
             });
         }
+
+        // Admin: Toggle Comments Section
+        document.querySelectorAll('.admin-toggle-comments').forEach(function(btn) {
+            if (btn.classList.contains('listener-added')) return;
+            btn.classList.add('listener-added');
+            btn.addEventListener('click', function() {
+                var section = document.getElementById('admin-comments-' + btn.dataset.id);
+                if (section) section.style.display = section.style.display === 'none' ? 'block' : 'none';
+            });
+        });
+
+        // Admin: comment-form submit (same handler as student but for admin dashboard)
+        document.querySelectorAll('.comment-form').forEach(function(form) {
+            if (form.classList.contains('listener-attached')) return;
+            form.classList.add('listener-attached');
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                var input = form.querySelector('input');
+                var content = (input ? input.value : '').trim();
+                var announcementId = form.dataset.announcementId;
+                if (!content || !announcementId) return;
+                if (!self.data.comments) self.data.comments = [];
+                var newComment = {
+                    id: crypto.randomUUID(),
+                    announcementId: announcementId,
+                    email: self.currentUser.email,
+                    content: content,
+                    date: new Date().toISOString().split('T')[0]
+                };
+                self.data.comments.push(newComment);
+                self.saveData();
+                // Inject bubble in-place — works for both admin (admin-comments-X) and student (comments-X)
+                var section = document.getElementById('admin-comments-' + announcementId) ||
+                              document.getElementById('comments-' + announcementId);
+                var cu = self.currentUser;
+                var cName = cu ? (cu.name || cu.email) : 'Unknown';
+                var isAdmin = cu && (cu.role === 'admin' || cu.adminRole);
+                var initial = cName.charAt(0).toUpperCase();
+                var bgColor = isAdmin ? 'var(--primary-color)' : '#64748b';
+
+                if (section) {
+                    section.style.display = 'block';
+                    var inputRow = form.closest('div');
+                    var bubble = document.createElement('div');
+                    // Admin feed bubble style
+                    if (section.id.indexOf('admin-comments-') === 0) {
+                        bubble.style.cssText = 'display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;';
+                        bubble.innerHTML = '<div style="width:32px;height:32px;border-radius:50%;background:' + bgColor + ';color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;">' + initial + '</div>' +
+                            '<div style="background:var(--bg-white);border-radius:14px;padding:8px 12px;flex:1;box-shadow:0 1px 2px rgba(0,0,0,0.06);">' +
+                            '<div style="font-size:12px;font-weight:700;">' + cName + (isAdmin ? ' <span style="font-size:10px;color:var(--primary-color);">(Admin)</span>' : '') + '</div>' +
+                            '<div style="font-size:13px;margin-top:2px;">' + content + '</div>' +
+                            '</div>';
+                    } else {
+                        // Student feed bubble style (fb-comment)
+                        bubble.className = 'fb-comment';
+                        bubble.innerHTML = '<div class="fb-comment-avatar" style="background:' + bgColor + ';">' + initial + '</div>' +
+                            '<div class="fb-comment-bubble">' +
+                            '<div class="fb-comment-author">' + cName + (isAdmin ? ' <span style="font-size:10px;color:var(--primary-color);">(Admin)</span>' : '') + '</div>' +
+                            '<div class="fb-comment-text">' + content + '</div>' +
+                            '</div>';
+                    }
+                    section.insertBefore(bubble, inputRow);
+
+                    // Update counters
+                    var total = self.data.comments.filter(function(cm) { return String(cm.announcementId) === String(announcementId); }).length;
+                    var adminBtn = document.querySelector('.admin-toggle-comments[data-id="' + announcementId + '"]');
+                    if (adminBtn) adminBtn.innerHTML = '<i class="fas fa-comment"></i> ' + total + ' Comment' + (total !== 1 ? 's' : '');
+                    var post = section.closest('.fb-post');
+                    if (post) {
+                        var countEl = post.querySelector('.fb-engagement-comments');
+                        if (countEl) countEl.textContent = total + ' comment' + (total !== 1 ? 's' : '');
+                        var engBar = post.querySelector('.fb-engagement-bar');
+                        if (engBar) engBar.style.display = '';
+                    }
+                }
+                if (input) input.value = '';
+            });
+        });
 
         // Admin: Pin / Unpin Announcement
         document.querySelectorAll('[data-action="pin-announcement"]').forEach(function(btn) {
