@@ -7150,7 +7150,10 @@ var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:
             var postComments = (self.data.comments || []).filter(function(c) {
                 return Number(c.postId) === Number(a.id) && c.postType === 'announcement';
             });
-            var commentsCount = postComments.length;
+            var postReplies = (self.data.comments || []).filter(function(r) {
+                return r.postType === 'reply' && postComments.some(function(c) { return Number(c.id) === Number(r.postId); });
+            });
+            var commentsCount = postComments.length + postReplies.length;
 
             html += '<div class="fb-post">';
 
@@ -7205,13 +7208,19 @@ var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:
                 '</div>';
 
             // ── Comments section ──
+            // Get all replies (postType='reply') for this announcement's comments
+            var allReplies = (self.data.comments || []).filter(function(r) { return r.postType === 'reply'; });
+
             html += '<div class="fb-comments-section" id="comments-' + a.id + '" style="display:block;">';
 
             postComments.forEach(function(c) {
                 var cu = (self.data.users || []).find(function(u) { return Number(u.id) === Number(c.authorId); });
                 var cName = c.authorName || (cu ? cu.name : '') || 'Unknown';
                 var cInit = cName.charAt(0).toUpperCase();
-                var isAdminComment = cu && (cu.role === 'admin' || cu.adminRole);
+                var isAdminComment = (cu && (cu.role === 'admin' || cu.adminRole)) ||
+                                     (self.data.users || []).some(function(u) { return Number(u.id) === Number(c.authorId) && (u.role === 'admin' || u.adminRole); });
+
+                // Top-level comment bubble
                 html += '<div class="fb-comment">' +
                     '<div class="fb-comment-avatar" style="' + (isAdminComment ? 'background:var(--primary-color);' : '') + '">' + cInit + '</div>' +
                     '<div class="fb-comment-bubble">' +
@@ -7219,6 +7228,23 @@ var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:
                     '<div class="fb-comment-text">' + c.content + '</div>' +
                     '<div style="font-size:11px;color:var(--text-light);margin-top:3px;">' + self.formatPostDate(null, c.date) + '</div>' +
                     '</div></div>';
+
+                // Replies to this comment (indented, Facebook-style)
+                var replies = allReplies.filter(function(r) { return Number(r.postId) === Number(c.id); });
+                replies.forEach(function(r) {
+                    var ru = (self.data.users || []).find(function(u) { return Number(u.id) === Number(r.authorId); });
+                    var rName = r.authorName || (ru ? ru.name : '') || 'Unknown';
+                    var rInit = rName.charAt(0).toUpperCase();
+                    var isAdminReply = (ru && (ru.role === 'admin' || ru.adminRole)) ||
+                                      (self.data.users || []).some(function(u) { return Number(u.id) === Number(r.authorId) && (u.role === 'admin' || u.adminRole); });
+                    html += '<div class="fb-comment" style="margin-left:40px;margin-top:4px;">' +
+                        '<div class="fb-comment-avatar" style="width:28px;height:28px;font-size:12px;' + (isAdminReply ? 'background:var(--primary-color);' : 'background:#64748b;') + '">' + rInit + '</div>' +
+                        '<div class="fb-comment-bubble">' +
+                        '<div class="fb-comment-author">' + rName + (isAdminReply ? ' <span style="font-size:10px;color:var(--primary-color);font-weight:700;">(Admin)</span>' : '') + '</div>' +
+                        '<div class="fb-comment-text">' + r.content + '</div>' +
+                        '<div style="font-size:11px;color:var(--text-light);margin-top:3px;">' + self.formatPostDate(null, r.date) + '</div>' +
+                        '</div></div>';
+                });
             });
 
             html += '<div class="fb-comment-input-row">' +
