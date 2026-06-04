@@ -5900,8 +5900,11 @@ var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:
                     var icon = f.type === 'pdf' ? 'fa-file-pdf' : 'fa-file-alt';
                     html += '<div class="file-item">' +
                         '<div class="file-icon"><i class="fas ' + icon + '"></i></div>' +
-                        '<div class="file-info"><div class="file-name">' + f.name + '</div><div class="file-size">' + f.size + ' | ' + f.category + '</div></div>' +
-                        '<button class="btn btn-danger btn-sm" data-action="delete-file" data-id="' + f.id + '">Delete</button></div>';
+                        '<div class="file-info"><div class="file-name">' + f.name + '</div><div class="file-size">' + f.size + ' | ' + f.category + ' | ' + (f.updatedAt || '') + '</div></div>' +
+                        '<div style="display:flex;gap:6px;flex-shrink:0;">' +
+                        (f.data ? '<button class="btn btn-secondary btn-sm" data-action="download-file" data-id="' + f.id + '"><i class="fas fa-download"></i> Download</button>' : '') +
+                        '<button class="btn btn-danger btn-sm" data-action="delete-file" data-id="' + f.id + '"><i class="fas fa-trash"></i> Delete</button>' +
+                        '</div></div>';
                 }
                 html += '</div>';
             }
@@ -7020,62 +7023,97 @@ var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:
         var self = this;
         if (!this.data.comments) this.data.comments = [];
         if ((this.data.announcements || []).length === 0) {
-            return '<div class="empty-state"><div class="empty-icon"><i class="fas fa-newspaper"></i></div><h3 class="empty-title">No news</h3><p class="empty-text">Check back later for updates</p></div>';
+            return '<div class="empty-state"><div class="empty-icon"><i class="fas fa-newspaper"></i></div><h3 class="empty-title">No news yet</h3><p class="empty-text">Check back later for updates from the CSC.</p></div>';
         }
-        
-        var html = '<div class="newsfeed">';
+
+        var userInitial = self.currentUser && self.currentUser.name ? self.currentUser.name.charAt(0).toUpperCase() : '?';
+
+        var html = '<div class="fb-feed">';
         this.data.announcements.forEach(function(a) {
             var hasLiked = a.likes && a.likes.indexOf(self.currentUser.email) > -1;
-            var hasAnswered = a.evaluations && a.evaluations.some(function(e) { return e.email === self.currentUser.email; });
-            var announcementComments = (self.data.comments || []).filter(function(c) { return c.announcementId === a.id; });
-            
-            html += '<div class="newsfeed-item">' +
-                (a.image ? '<img src="' + a.image + '" style="width:100%;max-height:300px;object-fit:cover;cursor:pointer;" onclick="App.viewFullImage(this)">' : '') +
-                '<div style="padding:16px;">' +
-                '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">' +
-                '<div class="profile-avatar" style="width:40px;height:40px;font-size:16px;"><i class="fas fa-school"></i></div>' +
-                '<div><div style="font-weight:600;">CSC Administration</div>' +
-                '<div style="font-size:12px;color:var(--text-light);">' + a.date + '</div></div></div>' +
-                '<h3 style="font-size:18px;font-weight:600;margin-bottom:8px;">' + a.title + '</h3>' +
-                '<p style="font-size:14px;line-height:1.6;margin-bottom:12px;">' + a.content + '</p>';
-            
-            // Evaluation form if exists
-            if (a.hasEvaluation && !hasAnswered) {
-                html += '<div style="background:var(--bg-color);padding:16px;border-radius:8px;margin-bottom:12px;">' +
-                    '<h4 style="margin-bottom:12px;">Please rate this announcement:</h4>' +
-                    '<div style="display:flex;gap:8px;margin-bottom:12px;">' +
-                    '<button class="btn btn-sm btn-' + (a.userRating === 1 ? 'primary' : 'secondary') + '" data-action="rate-announcement" data-id="' + a.id + '" data-rating="1">1</button>' +
-                    '<button class="btn btn-sm btn-' + (a.userRating === 2 ? 'primary' : 'secondary') + '" data-action="rate-announcement" data-id="' + a.id + '" data-rating="2">2</button>' +
-                    '<button class="btn btn-sm btn-' + (a.userRating === 3 ? 'primary' : 'secondary') + '" data-action="rate-announcement" data-id="' + a.id + '" data-rating="3">3</button>' +
-                    '<button class="btn btn-sm btn-' + (a.userRating === 4 ? 'primary' : 'secondary') + '" data-action="rate-announcement" data-id="' + a.id + '" data-rating="4">4</button>' +
-                    '<button class="btn btn-sm btn-' + (a.userRating === 5 ? 'primary' : 'secondary') + '" data-action="rate-announcement" data-id="' + a.id + '" data-rating="5">5</button>' +
-                    '</div></div>';
-            }
-            
-            html += '<div style="display:flex;gap:8px;">' +
-                '<button class="btn btn-' + (hasLiked ? 'success' : 'secondary') + ' btn-sm" data-action="like-announcement" data-id="' + a.id + '"><i class="fas fa-thumbs-up"></i> ' + (a.likes ? a.likes.length : 0) + '</button>' +
-                '<button class="btn btn-secondary btn-sm" data-action="toggle-comments" data-id="' + a.id + '"><i class="fas fa-comment"></i> ' + announcementComments.length + ' Comments</button>' +
+            var likesCount = a.likes ? a.likes.length : 0;
+            var postComments = (self.data.comments || []).filter(function(c) { return c.announcementId === a.id; });
+            var commentsCount = postComments.length;
+
+            html += '<div class="fb-post">';
+
+            // ── Header ──
+            html += '<div class="fb-post-header">' +
+                '<img class="fb-post-page-logo" src="csc-logo.jpeg" alt="CSC">' +
+                '<div class="fb-post-page-info">' +
+                '<div class="fb-post-page-name">CSC — STI College Legazpi' +
+                (a.pinned ? ' <span class="fb-pinned"><i class="fas fa-thumbtack"></i> Pinned</span>' : '') + '</div>' +
+                '<div class="fb-post-page-date"><i class="fas fa-globe-asia" style="font-size:11px;margin-right:3px;"></i>' + a.date + '</div>' +
                 '</div>' +
-                '<div class="comments-section" id="comments-' + a.id + '" style="display:none;margin-top:12px;padding:12px;background:var(--bg-color);border-radius:8px;">';
-            
-            announcementComments.forEach(function(c) {
-                var commentUser = (self.data.users || []).find(function(u) { return u.email === c.email; });
-                html += '<div style="margin-bottom:8px;padding:8px;background:white;border-radius:6px;">' +
-                    '<div style="font-weight:600;font-size:12px;">' + (commentUser ? commentUser.name : c.email) + '</div>' +
-                    '<div style="font-size:13px;">' + c.content + '</div>' +
-                    '<div style="font-size:11px;color:var(--text-light);margin-top:4px;">' + c.date + '</div>' +
-                    '</div>';
+                '</div>';
+
+            // ── Text body ──
+            html += '<div class="fb-post-body">';
+            if (a.title) html += '<div class="fb-post-headline">' + a.title + '</div>';
+            html += '<p class="fb-post-text">' + a.content + '</p>';
+            html += '</div>';
+
+            // ── Media ──
+            if (a.image) {
+                html += '<div class="fb-post-media" onclick="App.viewFullImage(this.querySelector(\'img\'))">' +
+                    '<img src="' + a.image + '" alt="Post image"></div>';
+            }
+            if (a.video) {
+                html += '<div class="fb-post-media"><video controls style="width:100%;max-height:380px;background:#000;"><source src="' + a.video + '"></video></div>';
+            }
+
+            // ── Attachments ──
+            if (a.attachments && a.attachments.length > 0) {
+                html += '<div class="fb-post-attachments">';
+                a.attachments.forEach(function(att) {
+                    html += '<div class="fb-attachment"><i class="fas fa-file-alt"></i><span>' + att.name + '</span></div>';
+                });
+                html += '</div>';
+            }
+
+            // ── Engagement counts ──
+            if (likesCount > 0 || commentsCount > 0) {
+                html += '<div class="fb-engagement-bar">';
+                if (likesCount > 0) html += '<span class="fb-engagement-likes"><i class="fas fa-thumbs-up"></i> ' + likesCount + '</span>';
+                if (commentsCount > 0) html += '<span class="fb-engagement-comments" onclick="document.getElementById(\'comments-' + a.id + '\').style.display=\'block\'">' + commentsCount + ' comment' + (commentsCount !== 1 ? 's' : '') + '</span>';
+                html += '</div>';
+            }
+
+            // ── Action buttons ──
+            html += '<div class="fb-action-bar">' +
+                '<button class="fb-action-btn' + (hasLiked ? ' fb-action-active' : '') + '" data-action="like-announcement" data-id="' + a.id + '">' +
+                '<i class="' + (hasLiked ? 'fas' : 'far') + ' fa-thumbs-up"></i> ' + (hasLiked ? 'Liked' : 'Like') + '</button>' +
+                '<button class="fb-action-btn" data-action="toggle-comments" data-id="' + a.id + '">' +
+                '<i class="far fa-comment"></i> Comment</button>' +
+                '</div>';
+
+            // ── Comments section ──
+            html += '<div class="fb-comments-section" id="comments-' + a.id + '" style="display:' + (commentsCount > 0 ? 'block' : 'none') + ';">';
+
+            postComments.forEach(function(c) {
+                var cu = (self.data.users || []).find(function(u) { return u.email === c.email; });
+                var cName = cu ? cu.name : c.email;
+                var cInit = cName.charAt(0).toUpperCase();
+                html += '<div class="fb-comment">' +
+                    '<div class="fb-comment-avatar">' + cInit + '</div>' +
+                    '<div class="fb-comment-bubble">' +
+                    '<div class="fb-comment-author">' + cName + '</div>' +
+                    '<div class="fb-comment-text">' + c.content + '</div>' +
+                    '</div></div>';
             });
-            
-            html += '<form class="comment-form" data-announcement-id="' + a.id + '" style="margin-top:8px;display:flex;gap:8px;">' +
-                '<input type="text" class="form-input" placeholder="Write a comment..." style="flex:1;font-size:13px;" required>' +
-                '<button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-paper-plane"></i></button>' +
-                '</form></div></div></div>';
+
+            html += '<div class="fb-comment-input-row">' +
+                '<div class="fb-comment-avatar fb-my-avatar">' + userInitial + '</div>' +
+                '<form class="comment-form fb-comment-form" data-announcement-id="' + a.id + '">' +
+                '<input type="text" class="fb-comment-input" placeholder="Write a comment..." required>' +
+                '<button type="submit" class="fb-comment-send"><i class="fas fa-paper-plane"></i></button>' +
+                '</form></div>';
+
+            html += '</div>'; // end comments section
+            html += '</div>'; // end fb-post
         });
+
         html += '</div>';
-        
-        html += '<style>.newsfeed-item{background:var(--bg-white);border-radius:var(--radius-md);border:1px solid var(--border-color);margin-bottom:16px;overflow:hidden;}</style>';
-        
         return html;
     },
 
@@ -8818,13 +8856,35 @@ var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:
                 });
             });
 
-            // Download Files
+            // Download Files — triggers actual device download
             document.querySelectorAll('[data-action="download-file"]').forEach(function(btn) {
+                if (btn.classList.contains('listener-added')) return;
+                btn.classList.add('listener-added');
                 btn.addEventListener('click', function() {
                     var file = self.data.files.find(function(f) { return f.id == btn.dataset.id; });
-                    if (file) {
-                        alert('Downloading: ' + file.name + '\nSize: ' + file.size);
+                    if (!file) return;
+                    if (!file.data) {
+                        alert('This file was uploaded before download support was added. Please re-upload it.');
+                        return;
                     }
+                    var a = document.createElement('a');
+                    a.href = file.data;
+                    a.download = file.name;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                });
+            });
+
+            // Delete Files (admin)
+            document.querySelectorAll('[data-action="delete-file"]').forEach(function(btn) {
+                if (btn.classList.contains('listener-added')) return;
+                btn.classList.add('listener-added');
+                btn.addEventListener('click', function() {
+                    if (!confirm('Delete "' + (self.data.files.find(function(f){ return f.id == btn.dataset.id; }) || {}).name + '"? This cannot be undone.')) return;
+                    self.data.files = self.data.files.filter(function(f) { return f.id != btn.dataset.id; });
+                    self.saveData();
+                    self.renderAdminDashboard();
                 });
             });
         } catch(e) {}
@@ -9347,20 +9407,30 @@ eventForm.addEventListener('submit', function(e) {
                     alert('Please select a file');
                     return;
                 }
-                 var newFile = {
-                     id: crypto.randomUUID(),
-                    name: file.name,
-                    category: document.getElementById('file-category').value,
-                    type: file.name.split('.').pop().toLowerCase(),
-                    size: (file.size / 1024).toFixed(1) + ' KB',
-                    version: '1.0',
-                    updatedAt: new Date().toISOString().split('T')[0]
+                var category = document.getElementById('file-category').value;
+                if (!category) { alert('Please select a category'); return; }
+                var reader = new FileReader();
+                reader.onload = function(ev) {
+                    var newFile = {
+                        id: crypto.randomUUID(),
+                        name: file.name,
+                        category: category,
+                        type: file.name.split('.').pop().toLowerCase(),
+                        size: file.size < 1048576
+                            ? (file.size / 1024).toFixed(1) + ' KB'
+                            : (file.size / 1048576).toFixed(1) + ' MB',
+                        data: ev.target.result,
+                        mimeType: file.type,
+                        version: '1.0',
+                        updatedAt: new Date().toISOString().split('T')[0]
+                    };
+                    self.data.files.push(newFile);
+                    self.saveData();
+                    fileModal.style.display = 'none';
+                    fileForm.reset();
+                    self.renderAdminDashboard();
                 };
-                self.data.files.push(newFile);
-                self.saveData();
-                fileModal.style.display = 'none';
-                fileForm.reset();
-                self.renderAdminDashboard();
+                reader.readAsDataURL(file);
             });
         }
 
