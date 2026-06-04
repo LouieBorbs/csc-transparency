@@ -3984,27 +3984,62 @@ renderAdminContent: function() {
                     '<button class="btn btn-danger btn-sm" data-action="delete-announcement" data-id="' + a.id + '"><i class="fas fa-trash"></i> Delete</button>' +
                     '</div>';
 
-                // Comments section
-                html += '<div id="admin-comments-' + a.id + '" style="display:' + (postComments.length > 0 ? 'block' : 'none') + ';margin-top:12px;padding:12px;background:var(--bg-color);border-radius:8px;">';
+                // Comments section — threaded
+                var topComments = postComments.filter(function(c) { return !c.parentCommentId; });
+                var replyComments = postComments.filter(function(c) { return c.parentCommentId; });
 
-                postComments.forEach(function(c) {
+                html += '<div id="admin-comments-' + a.id + '" style="display:' + (postComments.length > 0 ? 'block' : 'none') + ';margin-top:12px;padding:12px 14px;background:var(--bg-color);border-radius:8px;">';
+
+                topComments.forEach(function(c) {
                     var cu = (self.data.users || []).find(function(u) { return u.email === c.email; });
                     var cName = cu ? cu.name : c.email;
                     var isAdmin = cu && (cu.role === 'admin' || cu.adminRole);
-                    html += '<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;">' +
-                        '<div style="width:32px;height:32px;border-radius:50%;background:' + (isAdmin ? 'var(--primary-color)' : '#64748b') + ';color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;">' + cName.charAt(0).toUpperCase() + '</div>' +
-                        '<div style="background:var(--bg-white);border-radius:14px;padding:8px 12px;flex:1;box-shadow:0 1px 2px rgba(0,0,0,0.06);">' +
-                        '<div style="font-size:12px;font-weight:700;color:var(--text-color);">' + cName + (isAdmin ? ' <span style="font-size:10px;color:var(--primary-color);font-weight:600;">(Admin)</span>' : '') + '</div>' +
-                        '<div style="font-size:13px;color:var(--text-color);margin-top:2px;">' + c.content + '</div>' +
-                        '<div style="font-size:11px;color:var(--text-light);margin-top:4px;">' + c.date + '</div>' +
-                        '</div></div>';
+                    var bgCol = isAdmin ? 'var(--primary-color)' : '#64748b';
+                    var commentReplies = replyComments.filter(function(r) { return String(r.parentCommentId) === String(c.id); });
+
+                    // Top-level comment
+                    html += '<div class="admin-comment-thread" id="thread-' + c.id + '" style="margin-bottom:10px;">';
+                    html += '<div style="display:flex;gap:8px;align-items:flex-start;">' +
+                        '<div style="width:34px;height:34px;border-radius:50%;background:' + bgCol + ';color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;">' + cName.charAt(0).toUpperCase() + '</div>' +
+                        '<div style="background:var(--bg-white);border-radius:14px;padding:8px 13px;flex:1;box-shadow:0 1px 3px rgba(0,0,0,0.07);">' +
+                        '<div style="font-size:12px;font-weight:700;">' + cName + (isAdmin ? ' <span style="font-size:10px;color:var(--primary-color);">(Admin)</span>' : '') + '</div>' +
+                        '<div style="font-size:13px;margin-top:2px;line-height:1.5;">' + c.content + '</div>' +
+                        '<div style="display:flex;align-items:center;gap:12px;margin-top:5px;">' +
+                        '<span style="font-size:11px;color:var(--text-light);">' + c.date + '</span>' +
+                        '<button class="admin-reply-btn" data-comment-id="' + c.id + '" data-commenter="' + cName.replace(/"/g,'') + '" style="background:none;border:none;cursor:pointer;font-size:12px;font-weight:600;color:var(--primary-color);padding:0;"><i class="fas fa-reply"></i> Reply</button>' +
+                        '</div></div></div>';
+
+                    // Existing replies under this comment
+                    commentReplies.forEach(function(r) {
+                        var ru = (self.data.users || []).find(function(u) { return u.email === r.email; });
+                        var rName = ru ? ru.name : r.email;
+                        var rIsAdmin = ru && (ru.role === 'admin' || ru.adminRole);
+                        var rBg = rIsAdmin ? 'var(--primary-color)' : '#94a3b8';
+                        html += '<div style="display:flex;gap:8px;align-items:flex-start;margin-top:6px;margin-left:42px;">' +
+                            '<div style="width:28px;height:28px;border-radius:50%;background:' + rBg + ';color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;">' + rName.charAt(0).toUpperCase() + '</div>' +
+                            '<div style="background:var(--bg-white);border-radius:12px;padding:7px 11px;flex:1;box-shadow:0 1px 2px rgba(0,0,0,0.06);">' +
+                            '<div style="font-size:12px;font-weight:700;">' + rName + (rIsAdmin ? ' <span style="font-size:10px;color:var(--primary-color);">(Admin)</span>' : '') + '</div>' +
+                            '<div style="font-size:13px;margin-top:1px;">' + r.content + '</div>' +
+                            '<div style="font-size:11px;color:var(--text-light);margin-top:3px;">' + r.date + '</div>' +
+                            '</div></div>';
+                    });
+
+                    // Inline reply input (hidden until Reply clicked)
+                    html += '<div id="reply-input-' + c.id + '" style="display:none;margin-top:6px;margin-left:42px;">' +
+                        '<form class="admin-reply-form" data-announcement-id="' + a.id + '" data-parent-id="' + c.id + '" data-commenter="' + cName.replace(/"/g,'') + '" style="display:flex;gap:6px;align-items:center;">' +
+                        '<div style="width:28px;height:28px;border-radius:50%;background:var(--primary-color);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;">A</div>' +
+                        '<input type="text" class="form-input" placeholder="Reply to ' + cName.replace(/"/g,'') + '..." style="flex:1;font-size:13px;border-radius:20px;padding:7px 14px;" required>' +
+                        '<button type="submit" class="btn btn-primary btn-sm" style="padding:7px 12px;"><i class="fas fa-paper-plane"></i></button>' +
+                        '</form></div>';
+
+                    html += '</div>'; // end thread
                 });
 
-                // Admin reply input
-                html += '<div style="display:flex;gap:8px;align-items:center;margin-top:8px;">' +
-                    '<div style="width:32px;height:32px;border-radius:50%;background:var(--primary-color);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;">A</div>' +
+                // General new comment input (top-level)
+                html += '<div style="display:flex;gap:8px;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--border-color);">' +
+                    '<div style="width:34px;height:34px;border-radius:50%;background:var(--primary-color);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;">A</div>' +
                     '<form class="comment-form" data-announcement-id="' + a.id + '" style="display:flex;flex:1;gap:6px;">' +
-                    '<input type="text" class="form-input" placeholder="Reply as Admin..." style="flex:1;font-size:13px;border-radius:20px;padding:8px 14px;" required>' +
+                    '<input type="text" class="form-input" placeholder="Write a comment as Admin..." style="flex:1;font-size:13px;border-radius:20px;padding:8px 14px;" required>' +
                     '<button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-paper-plane"></i></button>' +
                     '</form></div>';
 
@@ -9423,6 +9458,74 @@ eventForm.addEventListener('submit', function(e) {
                 }
             });
         }
+
+        // Admin: Reply button — show/hide inline reply input for a specific comment
+        document.querySelectorAll('.admin-reply-btn').forEach(function(btn) {
+            if (btn.classList.contains('listener-added')) return;
+            btn.classList.add('listener-added');
+            btn.addEventListener('click', function() {
+                var commentId = btn.dataset.commentId;
+                var inputDiv = document.getElementById('reply-input-' + commentId);
+                if (!inputDiv) return;
+                var isVisible = inputDiv.style.display !== 'none';
+                // Hide all other reply inputs first
+                document.querySelectorAll('[id^="reply-input-"]').forEach(function(d) { d.style.display = 'none'; });
+                if (!isVisible) {
+                    inputDiv.style.display = 'block';
+                    var inp = inputDiv.querySelector('input');
+                    if (inp) { inp.focus(); }
+                }
+            });
+        });
+
+        // Admin: Reply form submission (threaded reply to specific comment)
+        document.querySelectorAll('.admin-reply-form').forEach(function(form) {
+            if (form.classList.contains('listener-attached')) return;
+            form.classList.add('listener-attached');
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                var input = form.querySelector('input');
+                var content = (input ? input.value : '').trim();
+                var announcementId = form.dataset.announcementId;
+                var parentId = form.dataset.parentId;
+                var commenterName = form.dataset.commenter || '';
+                if (!content || !announcementId || !parentId) return;
+                if (!self.data.comments) self.data.comments = [];
+                var newReply = {
+                    id: crypto.randomUUID(),
+                    announcementId: announcementId,
+                    parentCommentId: parentId,
+                    email: self.currentUser.email,
+                    content: content,
+                    date: new Date().toISOString().split('T')[0]
+                };
+                self.data.comments.push(newReply);
+                self.saveData();
+
+                // Inject reply bubble above the reply input div
+                var replyInputDiv = document.getElementById('reply-input-' + parentId);
+                var cu = self.currentUser;
+                var cName = cu ? (cu.name || cu.email) : 'Admin';
+                var rBg = 'var(--primary-color)';
+                var bubble = document.createElement('div');
+                bubble.style.cssText = 'display:flex;gap:8px;align-items:flex-start;margin-top:6px;margin-left:42px;';
+                bubble.innerHTML = '<div style="width:28px;height:28px;border-radius:50%;background:' + rBg + ';color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;">' + cName.charAt(0).toUpperCase() + '</div>' +
+                    '<div style="background:var(--bg-white);border-radius:12px;padding:7px 11px;flex:1;box-shadow:0 1px 2px rgba(0,0,0,0.06);">' +
+                    '<div style="font-size:12px;font-weight:700;">' + cName + ' <span style="font-size:10px;color:var(--primary-color);">(Admin)</span></div>' +
+                    '<div style="font-size:13px;margin-top:1px;">' + content + '</div>' +
+                    '<div style="font-size:11px;color:var(--text-light);margin-top:3px;">' + newReply.date + '</div>' +
+                    '</div>';
+                if (replyInputDiv && replyInputDiv.parentNode) {
+                    replyInputDiv.parentNode.insertBefore(bubble, replyInputDiv);
+                }
+                // Hide the reply input and update comment count
+                if (replyInputDiv) replyInputDiv.style.display = 'none';
+                var total = self.data.comments.filter(function(cm) { return String(cm.announcementId) === String(announcementId); }).length;
+                var countBtn = document.querySelector('.admin-toggle-comments[data-id="' + announcementId + '"]');
+                if (countBtn) countBtn.innerHTML = '<i class="fas fa-comment"></i> ' + total + ' Comment' + (total !== 1 ? 's' : '');
+                if (input) input.value = '';
+            });
+        });
 
         // Admin: Toggle Comments Section
         document.querySelectorAll('.admin-toggle-comments').forEach(function(btn) {
