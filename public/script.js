@@ -750,16 +750,20 @@ var App = {
             var timeSinceLastLoad = Date.now() - (self._lastDataLoad || 0);
             if (timeSinceLastLoad < 8000) return; // poll every 8 seconds
             try {
-                var prevCommentCount = (self.data.comments || []).length;
-                var prevAnnCount    = (self.data.announcements || []).length;
+                // Snapshot engagement state before refresh
+                var prevSnap = JSON.stringify((self.data.announcements || []).map(function(a) {
+                    return String(a.id) + ':' + (a.likes ? a.likes.length : 0);
+                })) + '|' + String((self.data.comments || []).length);
+
                 await self.loadDataFromAPI();
                 self._lastDataLoad = Date.now();
 
-                var newCommentCount = (self.data.comments || []).length;
-                var newAnnCount     = (self.data.announcements || []).length;
-                var dataChanged = (newCommentCount !== prevCommentCount || newAnnCount !== prevAnnCount);
+                // Snapshot after refresh
+                var newSnap = JSON.stringify((self.data.announcements || []).map(function(a) {
+                    return String(a.id) + ':' + (a.likes ? a.likes.length : 0);
+                })) + '|' + String((self.data.comments || []).length);
 
-                if (!dataChanged) return; // nothing new — skip re-render
+                if (prevSnap === newSnap) return; // nothing changed — skip re-render
 
                 var isAdmin = self.currentUser.role === 'admin' || self.currentUser.adminRole;
                 if (isAdmin) {
@@ -8816,7 +8820,7 @@ var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:
                 });
             }
 
-            // Like / Unlike Announcements — toggle, update DOM in-place
+            // Like / Unlike Announcements — toggle and re-render for consistent counts
             document.querySelectorAll('[data-action="like-announcement"]').forEach(function(btn) {
                 if (btn.classList.contains('listener-added')) return;
                 btn.classList.add('listener-added');
@@ -8831,25 +8835,12 @@ var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:
                         ann.likes.splice(idx, 1);
                     }
                     self.saveData();
-                    var liked = ann.likes.indexOf(self.currentUser.email) !== -1;
-                    var likeCount = ann.likes.length;
-                    // Update button appearance without full re-render
-                    if (btn.classList.contains('fb-action-btn')) {
-                        btn.classList.toggle('fb-action-active', liked);
-                        var icon = btn.querySelector('i');
-                        if (icon) { icon.className = (liked ? 'fas' : 'far') + ' fa-thumbs-up'; }
-                        btn.innerHTML = (liked ? '<i class="fas fa-thumbs-up"></i> Liked' : '<i class="far fa-thumbs-up"></i> Like');
-                    }
-                    // Update engagement bar like count
-                    var post = btn.closest('.fb-post');
-                    if (post) {
-                        var likeSpan = post.querySelector('.fb-engagement-likes');
-                        if (likeSpan) {
-                            likeSpan.innerHTML = '<i class="fas fa-thumbs-up"></i> ' + likeCount;
-                            likeSpan.style.display = likeCount > 0 ? '' : 'none';
-                        }
-                        var engBar = post.querySelector('.fb-engagement-bar');
-                        if (engBar) engBar.style.display = likeCount > 0 ? '' : 'none';
+                    // Re-render so both student and admin see the correct count
+                    var isAdminUser = self.currentUser && (self.currentUser.role === 'admin' || self.currentUser.adminRole);
+                    if (isAdminUser) {
+                        self.renderAdminDashboard();
+                    } else {
+                        self.renderStudentDashboard();
                     }
                 });
             });
