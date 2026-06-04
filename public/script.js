@@ -295,6 +295,12 @@ var App = {
                  if (!e.rsvps) e.rsvps = [];
              });
 
+             // Normalize comments: map snake_case Supabase columns → camelCase frontend fields
+             (self.data.comments || []).forEach(function(c) {
+                 if (!c.announcementId && c.announcement_id) c.announcementId = c.announcement_id;
+                 if (!c.parentCommentId && c.parent_comment_id) c.parentCommentId = c.parent_comment_id;
+             });
+
              // Snapshot AFTER normalization: baseline for change detection in _syncToSupabase
              self._apiSnapshotById = {};
              tableKeys.forEach(function(t) {
@@ -9508,7 +9514,9 @@ eventForm.addEventListener('submit', function(e) {
                 var newReply = {
                     id: crypto.randomUUID(),
                     announcementId: announcementId,
+                    announcement_id: announcementId,
                     parentCommentId: parentId,
+                    parent_comment_id: parentId,
                     email: self.currentUser.email,
                     content: content,
                     date: new Date().toISOString()
@@ -9565,6 +9573,7 @@ eventForm.addEventListener('submit', function(e) {
                 var newComment = {
                     id: crypto.randomUUID(),
                     announcementId: announcementId,
+                    announcement_id: announcementId,
                     email: self.currentUser.email,
                     content: content,
                     date: new Date().toISOString()
