@@ -3990,7 +3990,7 @@ renderAdminContent: function() {
                 // Action bar
                 html += '<div style="display:flex;gap:6px;align-items:center;border-top:1px solid var(--border-color);padding-top:10px;margin-top:8px;flex-wrap:wrap;">' +
                     '<button class="btn btn-' + (likesCount > 0 ? 'success' : 'secondary') + ' btn-sm"><i class="fas fa-thumbs-up"></i> ' + likesCount + ' Likes</button>' +
-                    '<button class="btn btn-secondary btn-sm admin-toggle-comments" data-id="' + a.id + '"><i class="fas fa-comment"></i> ' + postComments.length + ' Comments</button>' +
+                    '<span class="btn btn-secondary btn-sm" style="cursor:default;"><i class="fas fa-comment"></i> ' + postComments.length + ' Comment' + (postComments.length !== 1 ? 's' : '') + '</span>' +
                     '<button class="btn btn-secondary btn-sm" data-action="pin-announcement" data-id="' + a.id + '">' + (a.pinned ? '<i class="fas fa-thumbtack"></i> Unpin' : '<i class="fas fa-thumbtack"></i> Pin') + '</button>' +
                     '<button class="btn btn-danger btn-sm" data-action="delete-announcement" data-id="' + a.id + '"><i class="fas fa-trash"></i> Delete</button>' +
                     '</div>';
@@ -3999,7 +3999,7 @@ renderAdminContent: function() {
                 var topComments = postComments.filter(function(c) { return !c.parentCommentId; });
                 var replyComments = postComments.filter(function(c) { return c.parentCommentId; });
 
-                html += '<div id="admin-comments-' + a.id + '" style="display:' + (postComments.length > 0 ? 'block' : 'none') + ';margin-top:12px;padding:12px 14px;background:var(--bg-color);border-radius:8px;">';
+                html += '<div id="admin-comments-' + a.id + '" style="display:block;margin-top:12px;padding:12px 14px;background:var(--bg-color);border-radius:8px;">';
 
                 topComments.forEach(function(c) {
                     var cu = (self.data.users || []).find(function(u) { return u.email === c.email; });
@@ -4016,7 +4016,7 @@ renderAdminContent: function() {
                         '<div style="font-size:12px;font-weight:700;">' + cName + (isAdmin ? ' <span style="font-size:10px;color:var(--primary-color);">(Admin)</span>' : '') + '</div>' +
                         '<div style="font-size:13px;margin-top:2px;line-height:1.5;">' + c.content + '</div>' +
                         '<div style="display:flex;align-items:center;gap:12px;margin-top:5px;">' +
-                        '<span style="font-size:11px;color:var(--text-light);">' + c.date + '</span>' +
+                        '<span style="font-size:11px;color:var(--text-light);">' + self.formatPostDate(null, c.date) + '</span>' +
                         '<button class="admin-reply-btn" data-comment-id="' + c.id + '" data-commenter="' + cName.replace(/"/g,'') + '" style="background:none;border:none;cursor:pointer;font-size:12px;font-weight:600;color:var(--primary-color);padding:0;"><i class="fas fa-reply"></i> Reply</button>' +
                         '</div></div></div>';
 
@@ -4031,7 +4031,7 @@ renderAdminContent: function() {
                             '<div style="background:var(--bg-white);border-radius:12px;padding:7px 11px;flex:1;box-shadow:0 1px 2px rgba(0,0,0,0.06);">' +
                             '<div style="font-size:12px;font-weight:700;">' + rName + (rIsAdmin ? ' <span style="font-size:10px;color:var(--primary-color);">(Admin)</span>' : '') + '</div>' +
                             '<div style="font-size:13px;margin-top:1px;">' + r.content + '</div>' +
-                            '<div style="font-size:11px;color:var(--text-light);margin-top:3px;">' + r.date + '</div>' +
+                            '<div style="font-size:11px;color:var(--text-light);margin-top:3px;">' + self.formatPostDate(null, r.date) + '</div>' +
                             '</div></div>';
                     });
 
@@ -7175,17 +7175,19 @@ var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:
                 '</div>';
 
             // ── Comments section ──
-            html += '<div class="fb-comments-section" id="comments-' + a.id + '" style="display:' + (commentsCount > 0 ? 'block' : 'none') + ';">';
+            html += '<div class="fb-comments-section" id="comments-' + a.id + '" style="display:block;">';
 
             postComments.forEach(function(c) {
                 var cu = (self.data.users || []).find(function(u) { return u.email === c.email; });
                 var cName = cu ? cu.name : c.email;
                 var cInit = cName.charAt(0).toUpperCase();
+                var isAdminComment = cu && (cu.role === 'admin' || cu.adminRole);
                 html += '<div class="fb-comment">' +
-                    '<div class="fb-comment-avatar">' + cInit + '</div>' +
+                    '<div class="fb-comment-avatar" style="' + (isAdminComment ? 'background:var(--primary-color);' : '') + '">' + cInit + '</div>' +
                     '<div class="fb-comment-bubble">' +
-                    '<div class="fb-comment-author">' + cName + '</div>' +
+                    '<div class="fb-comment-author">' + cName + (isAdminComment ? ' <span style="font-size:10px;color:var(--primary-color);font-weight:700;">(Admin)</span>' : '') + '</div>' +
                     '<div class="fb-comment-text">' + c.content + '</div>' +
+                    '<div style="font-size:11px;color:var(--text-light);margin-top:3px;">' + self.formatPostDate(null, c.date) + '</div>' +
                     '</div></div>';
             });
 
@@ -9509,7 +9511,7 @@ eventForm.addEventListener('submit', function(e) {
                     parentCommentId: parentId,
                     email: self.currentUser.email,
                     content: content,
-                    date: new Date().toISOString().split('T')[0]
+                    date: new Date().toISOString()
                 };
                 self.data.comments.push(newReply);
                 self.saveData();
@@ -9525,7 +9527,7 @@ eventForm.addEventListener('submit', function(e) {
                     '<div style="background:var(--bg-white);border-radius:12px;padding:7px 11px;flex:1;box-shadow:0 1px 2px rgba(0,0,0,0.06);">' +
                     '<div style="font-size:12px;font-weight:700;">' + cName + ' <span style="font-size:10px;color:var(--primary-color);">(Admin)</span></div>' +
                     '<div style="font-size:13px;margin-top:1px;">' + content + '</div>' +
-                    '<div style="font-size:11px;color:var(--text-light);margin-top:3px;">' + newReply.date + '</div>' +
+                    '<div style="font-size:11px;color:var(--text-light);margin-top:3px;">' + self.formatPostDate(null, newReply.date) + '</div>' +
                     '</div>';
                 if (replyInputDiv && replyInputDiv.parentNode) {
                     replyInputDiv.parentNode.insertBefore(bubble, replyInputDiv);
@@ -9565,7 +9567,7 @@ eventForm.addEventListener('submit', function(e) {
                     announcementId: announcementId,
                     email: self.currentUser.email,
                     content: content,
-                    date: new Date().toISOString().split('T')[0]
+                    date: new Date().toISOString()
                 };
                 self.data.comments.push(newComment);
                 self.saveData();
@@ -9582,6 +9584,7 @@ eventForm.addEventListener('submit', function(e) {
                     section.style.display = 'block';
                     var inputRow = form.closest('div');
                     var bubble = document.createElement('div');
+                    var nowStr = self.formatPostDate(null, newComment.date);
                     // Admin feed bubble style
                     if (section.id.indexOf('admin-comments-') === 0) {
                         bubble.style.cssText = 'display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;';
@@ -9589,6 +9592,7 @@ eventForm.addEventListener('submit', function(e) {
                             '<div style="background:var(--bg-white);border-radius:14px;padding:8px 12px;flex:1;box-shadow:0 1px 2px rgba(0,0,0,0.06);">' +
                             '<div style="font-size:12px;font-weight:700;">' + cName + (isAdmin ? ' <span style="font-size:10px;color:var(--primary-color);">(Admin)</span>' : '') + '</div>' +
                             '<div style="font-size:13px;margin-top:2px;">' + content + '</div>' +
+                            '<div style="font-size:11px;color:var(--text-light);margin-top:4px;">' + nowStr + '</div>' +
                             '</div>';
                     } else {
                         // Student feed bubble style (fb-comment)
@@ -9597,6 +9601,7 @@ eventForm.addEventListener('submit', function(e) {
                             '<div class="fb-comment-bubble">' +
                             '<div class="fb-comment-author">' + cName + (isAdmin ? ' <span style="font-size:10px;color:var(--primary-color);">(Admin)</span>' : '') + '</div>' +
                             '<div class="fb-comment-text">' + content + '</div>' +
+                            '<div style="font-size:11px;color:var(--text-light);margin-top:3px;">' + nowStr + '</div>' +
                             '</div>';
                     }
                     section.insertBefore(bubble, inputRow);
