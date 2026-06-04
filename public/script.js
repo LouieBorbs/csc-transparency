@@ -3955,7 +3955,12 @@ renderAdminContent: function() {
             for (var i = 0; i < announcements.length; i++) {
                 var a = announcements[i];
                 var likesCount = a.likes ? a.likes.length : 0;
-                var postComments = a.comments || [];
+                var postComments = (self.data.comments || []).filter(function(c) {
+                    return Number(c.postId) === Number(a.id) && c.postType === 'announcement';
+                });
+                var replyComments = (self.data.comments || []).filter(function(c) {
+                    return c.postType === 'reply';
+                });
 
                 html += '<div class="newsfeed-item" style="background:var(--bg-white);border-radius:var(--radius-md);border:1px solid var(--border-color);margin-bottom:16px;overflow:hidden;">';
 
@@ -4000,18 +4005,16 @@ renderAdminContent: function() {
                     '<button class="btn btn-danger btn-sm" data-action="delete-announcement" data-id="' + a.id + '"><i class="fas fa-trash"></i> Delete</button>' +
                     '</div>';
 
-                // Comments section — threaded
-                var topComments = postComments.filter(function(c) { return !c.parentCommentId; });
-                var replyComments = postComments.filter(function(c) { return c.parentCommentId; });
+                // Comments section — threaded (topComments = announcement-level, replyComments = replies)
+                var topComments = postComments; // all postType='announcement' are top-level
 
                 html += '<div id="admin-comments-' + a.id + '" style="display:block;margin-top:12px;padding:12px 14px;background:var(--bg-color);border-radius:8px;">';
 
                 topComments.forEach(function(c) {
-                    var cu = (self.data.users || []).find(function(u) { return u.email === c.email; });
-                    var cName = cu ? cu.name : c.email;
-                    var isAdmin = cu && (cu.role === 'admin' || cu.adminRole);
+                    var cName = c.authorName || c.email || 'Unknown';
+                    var isAdmin = (self.data.users || []).some(function(u) { return (u.email === c.email || Number(u.id) === Number(c.authorId)) && (u.role === 'admin' || u.adminRole); });
                     var bgCol = isAdmin ? 'var(--primary-color)' : '#64748b';
-                    var commentReplies = replyComments.filter(function(r) { return String(r.parentCommentId) === String(c.id); });
+                    var commentReplies = replyComments.filter(function(r) { return Number(r.postId) === Number(c.id); });
 
                     // Top-level comment
                     html += '<div class="admin-comment-thread" id="thread-' + c.id + '" style="margin-bottom:10px;">';
@@ -4027,9 +4030,8 @@ renderAdminContent: function() {
 
                     // Existing replies under this comment
                     commentReplies.forEach(function(r) {
-                        var ru = (self.data.users || []).find(function(u) { return u.email === r.email; });
-                        var rName = ru ? ru.name : r.email;
-                        var rIsAdmin = ru && (ru.role === 'admin' || ru.adminRole);
+                        var rName = r.authorName || r.email || 'Unknown';
+                        var rIsAdmin = (self.data.users || []).some(function(u) { return (Number(u.id) === Number(r.authorId)) && (u.role === 'admin' || u.adminRole); });
                         var rBg = rIsAdmin ? 'var(--primary-color)' : '#94a3b8';
                         html += '<div style="display:flex;gap:8px;align-items:flex-start;margin-top:6px;margin-left:42px;">' +
                             '<div style="width:28px;height:28px;border-radius:50%;background:' + rBg + ';color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;">' + rName.charAt(0).toUpperCase() + '</div>' +
@@ -7124,7 +7126,9 @@ var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:
         this.data.announcements.forEach(function(a) {
             var hasLiked = a.likes && a.likes.indexOf(self.currentUser.email) > -1;
             var likesCount = a.likes ? a.likes.length : 0;
-            var postComments = a.comments || [];
+            var postComments = (self.data.comments || []).filter(function(c) {
+                return Number(c.postId) === Number(a.id) && c.postType === 'announcement';
+            });
             var commentsCount = postComments.length;
 
             html += '<div class="fb-post">';
@@ -7183,8 +7187,8 @@ var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:
             html += '<div class="fb-comments-section" id="comments-' + a.id + '" style="display:block;">';
 
             postComments.forEach(function(c) {
-                var cu = (self.data.users || []).find(function(u) { return u.email === c.email; });
-                var cName = cu ? cu.name : c.email;
+                var cu = (self.data.users || []).find(function(u) { return Number(u.id) === Number(c.authorId); });
+                var cName = c.authorName || (cu ? cu.name : '') || 'Unknown';
                 var cInit = cName.charAt(0).toUpperCase();
                 var isAdminComment = cu && (cu.role === 'admin' || cu.adminRole);
                 html += '<div class="fb-comment">' +
@@ -9510,19 +9514,18 @@ eventForm.addEventListener('submit', function(e) {
                 var commenterName = form.dataset.commenter || '';
                 if (!content || !announcementId || !parentId) return;
                 if (!self.data.comments) self.data.comments = [];
+                var parentNumericId = parseInt(parentId);
+                if (isNaN(parentNumericId)) { alert('Comment not yet synced — please wait a moment and try again.'); return; }
                 var newReply = {
-                    id: crypto.randomUUID(),
-                    parentCommentId: parentId,
-                    email: self.currentUser.email,
+                    postId: parentNumericId,
+                    postType: 'reply',
+                    authorId: parseInt(self.currentUser.id) || 0,
+                    authorName: self.currentUser.name || self.currentUser.email || 'Unknown',
                     content: content,
                     date: new Date().toISOString()
                 };
-                // Store reply directly inside the announcement object
-                var annR = self.data.announcements.find(function(a) { return String(a.id) === String(announcementId); });
-                if (annR) {
-                    if (!annR.comments) annR.comments = [];
-                    annR.comments.push(newReply);
-                }
+                if (!self.data.comments) self.data.comments = [];
+                self.data.comments.push(newReply);
                 self.saveData();
 
                 // Inject reply bubble above the reply input div
@@ -9543,8 +9546,7 @@ eventForm.addEventListener('submit', function(e) {
                 }
                 // Hide the reply input and update comment count
                 if (replyInputDiv) replyInputDiv.style.display = 'none';
-                var annRC = self.data.announcements.find(function(a) { return String(a.id) === String(announcementId); });
-                var total = annRC && annRC.comments ? annRC.comments.length : 0;
+                var total = (self.data.comments || []).filter(function(cm) { return Number(cm.postId) === Number(announcementId) && cm.postType === 'announcement'; }).length;
                 var countBtn = document.querySelector('.admin-toggle-comments[data-id="' + announcementId + '"]');
                 if (countBtn) countBtn.innerHTML = '<i class="fas fa-comment"></i> ' + total + ' Comment' + (total !== 1 ? 's' : '');
                 if (input) input.value = '';
@@ -9571,18 +9573,19 @@ eventForm.addEventListener('submit', function(e) {
                 var content = (input ? input.value : '').trim();
                 var announcementId = form.dataset.announcementId;
                 if (!content || !announcementId) return;
+                var ann = self.data.announcements.find(function(a) { return String(a.id) === String(announcementId); });
+                var annNumericId = ann ? parseInt(ann.id) : NaN;
+                if (!ann || isNaN(annNumericId)) { alert('Post not yet saved — please wait a moment and try again.'); return; }
                 var newComment = {
-                    id: crypto.randomUUID(),
-                    email: self.currentUser.email,
+                    postId: annNumericId,
+                    postType: 'announcement',
+                    authorId: parseInt(self.currentUser.id) || 0,
+                    authorName: self.currentUser.name || self.currentUser.email || 'Unknown',
                     content: content,
                     date: new Date().toISOString()
                 };
-                // Store comment directly inside the announcement object (survives Supabase sync)
-                var ann = self.data.announcements.find(function(a) { return String(a.id) === String(announcementId); });
-                if (ann) {
-                    if (!ann.comments) ann.comments = [];
-                    ann.comments.push(newComment);
-                }
+                if (!self.data.comments) self.data.comments = [];
+                self.data.comments.push(newComment);
                 self.saveData();
                 // Inject bubble in-place — works for both admin (admin-comments-X) and student (comments-X)
                 var section = document.getElementById('admin-comments-' + announcementId) ||
@@ -9619,9 +9622,8 @@ eventForm.addEventListener('submit', function(e) {
                     }
                     section.insertBefore(bubble, inputRow);
 
-                    // Update counters from ann.comments
-                    var ann2 = self.data.announcements.find(function(a) { return String(a.id) === String(announcementId); });
-                    var total = ann2 && ann2.comments ? ann2.comments.length : 0;
+                    // Update counters
+                    var total = (self.data.comments || []).filter(function(cm) { return Number(cm.postId) === Number(announcementId) && cm.postType === 'announcement'; }).length;
                     var adminBtn = document.querySelector('.admin-toggle-comments[data-id="' + announcementId + '"]');
                     if (adminBtn) adminBtn.innerHTML = '<i class="fas fa-comment"></i> ' + total + ' Comment' + (total !== 1 ? 's' : '');
                     var post = section.closest('.fb-post');
