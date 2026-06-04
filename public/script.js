@@ -746,16 +746,37 @@ var App = {
         var self = this;
         this._dataRefreshInterval = setInterval(async function() {
             if (!self.currentUser) return;
-            if (self._syncInProgress) return; // don't refresh during a write
+            if (self._syncInProgress) return;
             var timeSinceLastLoad = Date.now() - (self._lastDataLoad || 0);
-            if (timeSinceLastLoad < 30000) return; // 30 seconds between auto-refreshes
+            if (timeSinceLastLoad < 8000) return; // poll every 8 seconds
             try {
+                var prevCommentCount = (self.data.comments || []).length;
+                var prevAnnCount    = (self.data.announcements || []).length;
                 await self.loadDataFromAPI();
                 self._lastDataLoad = Date.now();
+
+                var newCommentCount = (self.data.comments || []).length;
+                var newAnnCount     = (self.data.announcements || []).length;
+                var dataChanged = (newCommentCount !== prevCommentCount || newAnnCount !== prevAnnCount);
+
+                if (!dataChanged) return; // nothing new — skip re-render
+
+                var isAdmin = self.currentUser.role === 'admin' || self.currentUser.adminRole;
+                if (isAdmin) {
+                    // Only re-render admin news/announcements tab silently
+                    if (self.currentAdminTab === 'announcements' || self.currentAdminTab === 'news') {
+                        self.renderAdminDashboard();
+                    }
+                } else {
+                    // Student: re-render if on news/announcements tab
+                    if (self.currentStudentTab === 'news' || self.currentStudentTab === 'announcements') {
+                        self.renderStudentDashboard();
+                    }
+                }
             } catch(e) {
                 console.warn('[CSC] Auto-refresh failed:', e);
             }
-        }, 10000); // check every 10s
+        }, 5000); // check every 5 seconds
     },
 
     // ========== LANDING PAGE ==========
