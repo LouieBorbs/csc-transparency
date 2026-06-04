@@ -2071,8 +2071,8 @@ var App = {
                         '<div class="form-group"><label class="form-label">Student ID *</label>' +
                         '<input type="text" class="form-input" id="register-student-id" placeholder="Enter your student ID" required></div>' +
                         '<div class="form-group"><label class="form-label">Email Address *</label>' +
-                        '<input type="email" class="form-input" id="register-email" placeholder="Auto-generated: lastname.studentnumber@csc.com" readonly style="background:var(--bg-color);cursor:not-allowed;" required>' +
-                        '<span style="font-size:11px;color:var(--text-light);margin-top:4px;display:block;">Auto-filled based on Last Name and Student ID</span></div>' +
+                        '<input type="email" class="form-input" id="register-email" placeholder="Enter your primary email address" required>' +
+                        '<span style="font-size:11px;color:var(--text-light);margin-top:4px;display:block;">A confirmation email will be sent to this address</span></div>' +
                         '<div class="form-group"><label class="form-label">Password *</label>' +
                         '<div class="password-input-wrapper">' +
                         '<input type="password" class="form-input" id="register-password" placeholder="Create a password" required>' +
@@ -2155,18 +2155,6 @@ var App = {
         
 this.attachPasswordToggle('register-password', 'toggle-password');
         this.attachPasswordToggle('register-confirm', 'toggle-confirm');
-
-        // Auto-generate email from lastname + student ID
-        function updateAutoEmail() {
-            var lastName = (document.getElementById('register-lastname').value || '').trim().toLowerCase().replace(/\s+/g, '');
-            var sId = (document.getElementById('register-student-id').value || '').trim().replace(/\s+/g, '');
-            var emailField = document.getElementById('register-email');
-            if (emailField) emailField.value = (lastName && sId) ? lastName + '.' + sId + '@csc.com' : '';
-        }
-        var lnField = document.getElementById('register-lastname');
-        var sidField = document.getElementById('register-student-id');
-        if (lnField) lnField.addEventListener('input', updateAutoEmail);
-        if (sidField) sidField.addEventListener('input', updateAutoEmail);
 
         // Show/hide "Other specify" input for relationship
         var relationSelect = document.getElementById('register-emergency-relation');
