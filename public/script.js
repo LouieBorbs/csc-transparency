@@ -713,6 +713,17 @@ var App = {
         });
     },
 
+    formatPostDate: function(dateStr, createdAt) {
+        var d = createdAt ? new Date(createdAt) : (dateStr ? new Date(dateStr) : null);
+        if (!d || isNaN(d)) return dateStr || '';
+        var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        var h = d.getHours(), m = d.getMinutes();
+        var ampm = h >= 12 ? 'PM' : 'AM';
+        var h12 = h % 12 || 12;
+        return months[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear() +
+               ' at ' + h12 + ':' + String(m).padStart(2,'0') + ' ' + ampm;
+    },
+
     checkPasswordStrength: function(password) {
         var score = 0;
         if (password.length >= 8) score++;
@@ -3955,7 +3966,7 @@ renderAdminContent: function() {
                     '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">' +
                     '<img src="csc-logo.jpeg" style="width:42px;height:42px;border-radius:50%;object-fit:cover;border:1px solid var(--border-color);flex-shrink:0;">' +
                     '<div><div style="font-weight:700;font-size:15px;">CSC — STI College Legazpi' + (a.pinned ? ' <span class="badge badge-warning" style="font-size:11px;margin-left:6px;"><i class="fas fa-thumbtack"></i> Pinned</span>' : '') + '</div>' +
-                    '<div style="font-size:12px;color:var(--text-light);"><i class="fas fa-globe-asia" style="font-size:10px;"></i> ' + a.date + '</div></div></div>' +
+                    '<div style="font-size:12px;color:var(--text-light);"><i class="fas fa-globe-asia" style="font-size:10px;"></i> ' + self.formatPostDate(a.date, a.createdAt) + '</div></div></div>' +
                     '<h3 style="font-size:17px;font-weight:700;margin-bottom:6px;">' + a.title + '</h3>' +
                     '<p style="font-size:14px;line-height:1.65;margin-bottom:12px;white-space:pre-wrap;">' + a.content + '</p>';
 
@@ -7119,7 +7130,7 @@ var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:
                 '<div class="fb-post-page-info">' +
                 '<div class="fb-post-page-name">CSC — STI College Legazpi' +
                 (a.pinned ? ' <span class="fb-pinned"><i class="fas fa-thumbtack"></i> Pinned</span>' : '') + '</div>' +
-                '<div class="fb-post-page-date"><i class="fas fa-globe-asia" style="font-size:11px;margin-right:3px;"></i>' + a.date + '</div>' +
+                '<div class="fb-post-page-date"><i class="fas fa-globe-asia" style="font-size:11px;margin-right:3px;"></i>' + self.formatPostDate(a.date, a.createdAt) + '</div>' +
                 '</div>' +
                 '</div>';
 
@@ -9420,6 +9431,7 @@ eventForm.addEventListener('submit', function(e) {
                     title: document.getElementById('announcement-title').value,
                     content: document.getElementById('announcement-content').value,
                     date: new Date().toISOString().split('T')[0],
+                    createdAt: new Date().toISOString(),
                     pinned: document.getElementById('announcement-pin') ? document.getElementById('announcement-pin').checked : false,
                     scheduledDate: null,
                     likes: [],
