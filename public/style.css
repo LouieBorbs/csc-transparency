@@ -1776,7 +1776,7 @@ body {
 /* ════════════════════════════
    FACEBOOK-STYLE NEWS FEED
 ════════════════════════════ */
-.fb-feed { max-width: 680px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+.fb-feed { max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
 
 .fb-post {
     background: var(--bg-white);

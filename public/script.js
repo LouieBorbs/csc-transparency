@@ -8671,17 +8671,40 @@ var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:
                 });
             }
 
-            // Like Announcements
+            // Like / Unlike Announcements — toggle, update DOM in-place
             document.querySelectorAll('[data-action="like-announcement"]').forEach(function(btn) {
+                if (btn.classList.contains('listener-added')) return;
+                btn.classList.add('listener-added');
                 btn.addEventListener('click', function() {
-                    var ann = self.data.announcements.find(function(a) { return a.id == btn.dataset.id; });
-                    if (ann) {
-                        if (!ann.likes) ann.likes = [];
-                        if (ann.likes.indexOf(self.currentUser.email) === -1) {
-                            ann.likes.push(self.currentUser.email);
+                    var ann = self.data.announcements.find(function(a) { return String(a.id) === String(btn.dataset.id); });
+                    if (!ann) return;
+                    if (!ann.likes) ann.likes = [];
+                    var idx = ann.likes.indexOf(self.currentUser.email);
+                    if (idx === -1) {
+                        ann.likes.push(self.currentUser.email);
+                    } else {
+                        ann.likes.splice(idx, 1);
+                    }
+                    self.saveData();
+                    var liked = ann.likes.indexOf(self.currentUser.email) !== -1;
+                    var likeCount = ann.likes.length;
+                    // Update button appearance without full re-render
+                    if (btn.classList.contains('fb-action-btn')) {
+                        btn.classList.toggle('fb-action-active', liked);
+                        var icon = btn.querySelector('i');
+                        if (icon) { icon.className = (liked ? 'fas' : 'far') + ' fa-thumbs-up'; }
+                        btn.innerHTML = (liked ? '<i class="fas fa-thumbs-up"></i> Liked' : '<i class="far fa-thumbs-up"></i> Like');
+                    }
+                    // Update engagement bar like count
+                    var post = btn.closest('.fb-post');
+                    if (post) {
+                        var likeSpan = post.querySelector('.fb-engagement-likes');
+                        if (likeSpan) {
+                            likeSpan.innerHTML = '<i class="fas fa-thumbs-up"></i> ' + likeCount;
+                            likeSpan.style.display = likeCount > 0 ? '' : 'none';
                         }
-                        self.saveData();
-                        self.renderStudentDashboard();
+                        var engBar = post.querySelector('.fb-engagement-bar');
+                        if (engBar) engBar.style.display = likeCount > 0 ? '' : 'none';
                     }
                 });
             });
@@ -8709,27 +8732,53 @@ var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:
                 });
             });
 
-            // Submit Comments
+            // Submit Comments — update DOM in-place, no full re-render
             document.querySelectorAll('.comment-form').forEach(function(form) {
                 if (form.classList.contains('listener-attached')) return;
                 form.classList.add('listener-attached');
                 form.addEventListener('submit', function(e) {
                     e.preventDefault();
                     var input = form.querySelector('input');
-                    var content = input.value.trim();
+                    var content = (input ? input.value : '').trim();
                     var announcementId = form.dataset.announcementId;
-                    if (content && announcementId) {
-                        if (!self.data.comments) self.data.comments = [];
-                         self.data.comments.push({
-                             id: crypto.randomUUID(),
-                            announcementId: parseInt(announcementId),
-                            email: self.currentUser.email,
-                            content: content,
-                            date: new Date().toISOString().split('T')[0]
-                        });
-                        self.saveData();
-                        self.renderStudentDashboard();
+                    if (!content || !announcementId) return;
+                    if (!self.data.comments) self.data.comments = [];
+                    var newComment = {
+                        id: crypto.randomUUID(),
+                        announcementId: announcementId,
+                        email: self.currentUser.email,
+                        content: content,
+                        date: new Date().toISOString().split('T')[0]
+                    };
+                    self.data.comments.push(newComment);
+                    self.saveData();
+                    // Inject new comment bubble before the input row
+                    var section = document.getElementById('comments-' + announcementId);
+                    if (section) {
+                        var inputRow = form.closest('.fb-comment-input-row');
+                        var initial = self.currentUser.name ? self.currentUser.name.charAt(0).toUpperCase() : '?';
+                        var bubble = document.createElement('div');
+                        bubble.className = 'fb-comment';
+                        bubble.innerHTML = '<div class="fb-comment-avatar fb-my-avatar">' + initial + '</div>' +
+                            '<div class="fb-comment-bubble">' +
+                            '<div class="fb-comment-author">' + (self.currentUser.name || self.currentUser.email) + '</div>' +
+                            '<div class="fb-comment-text">' + content + '</div>' +
+                            '</div>';
+                        section.insertBefore(bubble, inputRow);
+                        // Update comment count in engagement bar
+                        var post = section.closest('.fb-post');
+                        if (post) {
+                            var countEl = post.querySelector('.fb-engagement-comments');
+                            if (countEl) {
+                                var c = self.data.comments.filter(function(cm) { return String(cm.announcementId) === String(announcementId); }).length;
+                                countEl.textContent = c + ' comment' + (c !== 1 ? 's' : '');
+                                countEl.style.display = '';
+                            }
+                            var engBar = post.querySelector('.fb-engagement-bar');
+                            if (engBar) engBar.style.display = '';
+                        }
                     }
+                    if (input) input.value = '';
                 });
             });
 
@@ -9381,6 +9430,33 @@ eventForm.addEventListener('submit', function(e) {
                 }
             });
         }
+
+        // Admin: Pin / Unpin Announcement
+        document.querySelectorAll('[data-action="pin-announcement"]').forEach(function(btn) {
+            if (btn.classList.contains('listener-added')) return;
+            btn.classList.add('listener-added');
+            btn.addEventListener('click', function() {
+                var ann = self.data.announcements.find(function(a) { return String(a.id) === String(btn.dataset.id); });
+                if (ann) {
+                    ann.pinned = !ann.pinned;
+                    self.saveData();
+                    self.renderAdminDashboard();
+                }
+            });
+        });
+
+        // Admin: Delete Announcement
+        document.querySelectorAll('[data-action="delete-announcement"]').forEach(function(btn) {
+            if (btn.classList.contains('listener-added')) return;
+            btn.classList.add('listener-added');
+            btn.addEventListener('click', function() {
+                var ann = self.data.announcements.find(function(a) { return String(a.id) === String(btn.dataset.id); });
+                if (!confirm('Delete "' + (ann ? ann.title : 'this announcement') + '"?')) return;
+                self.data.announcements = self.data.announcements.filter(function(a) { return String(a.id) !== String(btn.dataset.id); });
+                self.saveData();
+                self.renderAdminDashboard();
+            });
+        });
 
         var fileModal = document.getElementById('file-modal');
         var createFileBtn = document.getElementById('create-file-btn');
