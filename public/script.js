@@ -3951,12 +3951,11 @@ renderAdminContent: function() {
             var noResults = searchQuery || sortBy !== 'date-desc' ? 'No announcements match your search' : 'No announcements';
             html += '<div class="empty-state"><div class="empty-icon"><i class="fas fa-bullhorn"></i></div><h3 class="empty-title">' + noResults + '</h3></div>';
         } else {
-            if (!self.data.comments) self.data.comments = [];
             html += '<div class="newsfeed">';
             for (var i = 0; i < announcements.length; i++) {
                 var a = announcements[i];
                 var likesCount = a.likes ? a.likes.length : 0;
-                var postComments = (self.data.comments || []).filter(function(c) { return String(c.announcementId) === String(a.id); });
+                var postComments = a.comments || [];
 
                 html += '<div class="newsfeed-item" style="background:var(--bg-white);border-radius:var(--radius-md);border:1px solid var(--border-color);margin-bottom:16px;overflow:hidden;">';
 
@@ -7125,7 +7124,7 @@ var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:
         this.data.announcements.forEach(function(a) {
             var hasLiked = a.likes && a.likes.indexOf(self.currentUser.email) > -1;
             var likesCount = a.likes ? a.likes.length : 0;
-            var postComments = (self.data.comments || []).filter(function(c) { return c.announcementId === a.id; });
+            var postComments = a.comments || [];
             var commentsCount = postComments.length;
 
             html += '<div class="fb-post">';
@@ -9513,15 +9512,17 @@ eventForm.addEventListener('submit', function(e) {
                 if (!self.data.comments) self.data.comments = [];
                 var newReply = {
                     id: crypto.randomUUID(),
-                    announcementId: announcementId,
-                    announcement_id: announcementId,
                     parentCommentId: parentId,
-                    parent_comment_id: parentId,
                     email: self.currentUser.email,
                     content: content,
                     date: new Date().toISOString()
                 };
-                self.data.comments.push(newReply);
+                // Store reply directly inside the announcement object
+                var annR = self.data.announcements.find(function(a) { return String(a.id) === String(announcementId); });
+                if (annR) {
+                    if (!annR.comments) annR.comments = [];
+                    annR.comments.push(newReply);
+                }
                 self.saveData();
 
                 // Inject reply bubble above the reply input div
@@ -9542,7 +9543,8 @@ eventForm.addEventListener('submit', function(e) {
                 }
                 // Hide the reply input and update comment count
                 if (replyInputDiv) replyInputDiv.style.display = 'none';
-                var total = self.data.comments.filter(function(cm) { return String(cm.announcementId) === String(announcementId); }).length;
+                var annRC = self.data.announcements.find(function(a) { return String(a.id) === String(announcementId); });
+                var total = annRC && annRC.comments ? annRC.comments.length : 0;
                 var countBtn = document.querySelector('.admin-toggle-comments[data-id="' + announcementId + '"]');
                 if (countBtn) countBtn.innerHTML = '<i class="fas fa-comment"></i> ' + total + ' Comment' + (total !== 1 ? 's' : '');
                 if (input) input.value = '';
@@ -9569,16 +9571,18 @@ eventForm.addEventListener('submit', function(e) {
                 var content = (input ? input.value : '').trim();
                 var announcementId = form.dataset.announcementId;
                 if (!content || !announcementId) return;
-                if (!self.data.comments) self.data.comments = [];
                 var newComment = {
                     id: crypto.randomUUID(),
-                    announcementId: announcementId,
-                    announcement_id: announcementId,
                     email: self.currentUser.email,
                     content: content,
                     date: new Date().toISOString()
                 };
-                self.data.comments.push(newComment);
+                // Store comment directly inside the announcement object (survives Supabase sync)
+                var ann = self.data.announcements.find(function(a) { return String(a.id) === String(announcementId); });
+                if (ann) {
+                    if (!ann.comments) ann.comments = [];
+                    ann.comments.push(newComment);
+                }
                 self.saveData();
                 // Inject bubble in-place — works for both admin (admin-comments-X) and student (comments-X)
                 var section = document.getElementById('admin-comments-' + announcementId) ||
@@ -9615,8 +9619,9 @@ eventForm.addEventListener('submit', function(e) {
                     }
                     section.insertBefore(bubble, inputRow);
 
-                    // Update counters
-                    var total = self.data.comments.filter(function(cm) { return String(cm.announcementId) === String(announcementId); }).length;
+                    // Update counters from ann.comments
+                    var ann2 = self.data.announcements.find(function(a) { return String(a.id) === String(announcementId); });
+                    var total = ann2 && ann2.comments ? ann2.comments.length : 0;
                     var adminBtn = document.querySelector('.admin-toggle-comments[data-id="' + announcementId + '"]');
                     if (adminBtn) adminBtn.innerHTML = '<i class="fas fa-comment"></i> ' + total + ' Comment' + (total !== 1 ? 's' : '');
                     var post = section.closest('.fb-post');
