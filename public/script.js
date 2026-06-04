@@ -3641,121 +3641,115 @@ renderAdminContent: function() {
 
     renderAdminEvents: function() {
         var self = this;
-        var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">' +
+
+        // Dynamic batch options from events + students
+        var batchSet = {};
+        (this.data.events || []).forEach(function(e) { if (e.batch) batchSet[e.batch] = true; });
+        (this.data.users || []).forEach(function(u) { if (u.batch) { var b = u.batch; batchSet[b + ' - 1st Semester'] = true; batchSet[b + ' - 2nd Semester'] = true; } });
+        var batchFilterOpts = '<option value="">All Batches</option>';
+        Object.keys(batchSet).sort().reverse().forEach(function(b) { batchFilterOpts += '<option value="' + b + '">' + b + '</option>'; });
+
+        var html = '<div class="content-actions" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px;">' +
             '<button class="btn btn-primary" id="create-event-btn"><i class="fas fa-plus"></i> Create Event</button>' +
-            '<input type="text" class="form-input" id="event-search" placeholder="Search events..." style="width:200px;margin-left:auto;">' +
-            '<select class="form-input" id="event-sort" style="width:150px;">' +
-            '<option value="">Sort By</option>' +
-            '<option value="date-asc">Date (Earliest)</option>' +
-            '<option value="date-desc">Date (Latest)</option>' +
-            '<option value="upcoming">Status: Upcoming</option>' +
-            '<option value="finished">Status: Finished</option>' +
-            '<option value="cancelled">Status: Cancelled</option>' +
-            '<option value="moved">Status: Moved</option>' +
+            '<input type="text" class="form-input" id="event-search" placeholder="Search title, location, category..." style="width:240px;" value="' + (this.currentFilter.eventSearch || '') + '" oninput="App.filterEvents(this.value)">' +
+            '<select class="form-input" id="event-status-filter" style="width:160px;" onchange="App.filterEventStatus(this.value)">' +
+            '<option value="">All Statuses</option>' +
+            '<option value="upcoming"' + (this.currentFilter.eventStatus === 'upcoming' ? ' selected' : '') + '>Upcoming</option>' +
+            '<option value="finished"' + (this.currentFilter.eventStatus === 'finished' ? ' selected' : '') + '>Finished</option>' +
+            '<option value="cancelled"' + (this.currentFilter.eventStatus === 'cancelled' ? ' selected' : '') + '>Cancelled</option>' +
+            '<option value="moved"' + (this.currentFilter.eventStatus === 'moved' ? ' selected' : '') + '>Moved</option>' +
             '</select>' +
-            '<select class="form-input" id="event-batch-filter" style="width:150px;">' +
-            '<option value="">All Batches</option>' +
-            '<option value="2025-2026">2025-2026</option>' +
-            '<option value="2024-2025">2024-2025</option>' +
-            '<option value="2023-2024">2023-2024</option>' +
-            '</select></div>';
-        
+            '<select class="form-input" id="event-sort" style="width:160px;" onchange="App.sortEvents(this.value)">' +
+            '<option value="">Sort: Newest First</option>' +
+            '<option value="date-asc"' + (this.currentSort.eventSort === 'date-asc' ? ' selected' : '') + '>Date: Earliest</option>' +
+            '<option value="date-desc"' + (this.currentSort.eventSort === 'date-desc' ? ' selected' : '') + '>Date: Latest</option>' +
+            '</select>' +
+            '<select class="form-input" id="event-batch-filter" style="width:200px;" onchange="App.filterEventsBatch(this.value)">' + batchFilterOpts + '</select></div>';
+
         var events = this.data.events.slice();
-        
-        // Get current filter values
         var searchQuery = this.currentFilter.eventSearch || '';
         var sortBy = this.currentSort.eventSort || '';
         var batchFilter = this.currentFilter.eventBatch || '';
-        
+        var statusFilter = this.currentFilter.eventStatus || '';
+
+        if (searchQuery) {
+            var sq = searchQuery.toLowerCase();
+            events = events.filter(function(e) {
+                return (e.title && e.title.toLowerCase().includes(sq)) ||
+                       (e.location && e.location.toLowerCase().includes(sq)) ||
+                       (e.category && e.category.toLowerCase().includes(sq)) ||
+                       (e.description && e.description.toLowerCase().includes(sq));
+            });
+        }
+        if (statusFilter) events = events.filter(function(e) { return (e.status || 'upcoming') === statusFilter; });
+        if (batchFilter) events = events.filter(function(e) { return e.batch === batchFilter; });
+
+        if (sortBy === 'date-asc') events.sort(function(a, b) { return new Date(a.date) - new Date(b.date); });
+        else if (sortBy === 'date-desc') events.sort(function(a, b) { return new Date(b.date) - new Date(a.date); });
+        // Default: array order (newest first since we unshift on create)
+
         if (events.length === 0) {
-            var noEventMsg = searchQuery || sortBy || batchFilter ? 'No events match your search/filters' : 'No events yet';
-            var noEventSub = searchQuery || sortBy || batchFilter ? '' : 'Create your first event';
-            html += '<div class="empty-state"><div class="empty-icon"><i class="fas fa-calendar"></i></div><h3 class="empty-title">' + noEventMsg + '</h3><p class="empty-text">' + noEventSub + '</p></div>';
+            var noMsg = (searchQuery || statusFilter || batchFilter) ? 'No events match your filters' : 'No events yet';
+            html += '<div class="empty-state"><div class="empty-icon"><i class="fas fa-calendar"></i></div><h3 class="empty-title">' + noMsg + '</h3>' +
+                '<p class="empty-text">' + (searchQuery || statusFilter || batchFilter ? 'Try adjusting your search or filters.' : 'Click "Create Event" to add one.') + '</p></div>';
         } else {
-            // Apply search filter - title only
-            if (searchQuery) {
-                var sq = searchQuery.toLowerCase();
-                events = events.filter(function(e) {
-                    return (e.title && e.title.toLowerCase().includes(sq));
-                });
-            }
-            
-            // Apply status filter
-            var filteredEvents = events.filter(function(e) {
-                if (sortBy) {
-                    if (sortBy === 'upcoming' && e.status !== 'upcoming') return false;
-                    if (sortBy === 'finished' && e.status !== 'finished') return false;
-                    if (sortBy === 'cancelled' && e.status !== 'cancelled') return false;
-                    if (sortBy === 'moved' && e.status !== 'moved') return false;
-                }
-                if (batchFilter && e.batch !== batchFilter) return false;
-                return true;
-            });
-            
-            // Apply sorting - pinned events first, then by date
-            var pinnedEvents = filteredEvents.filter(function(e) { return e.pinned; });
-            var unpinnedEvents = filteredEvents.filter(function(e) { return !e.pinned; });
-            
-            unpinnedEvents.sort(function(a, b) { 
-                if (sortBy === 'date-asc') return new Date(a.date) - new Date(b.date);
-                if (sortBy === 'date-desc') return new Date(b.date) - new Date(a.date);
-                return 0;
-            });
-            
-            filteredEvents = pinnedEvents.concat(unpinnedEvents);
-            
-            html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;max-width:100%;">';
-            for (var i = 0; i < filteredEvents.length; i++) {
-                var e = filteredEvents[i];
+            html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;">';
+            for (var i = 0; i < events.length; i++) {
+                var e = events[i];
                 var statusClass = e.status === 'upcoming' ? 'badge-primary' : e.status === 'finished' ? 'badge-success' : e.status === 'cancelled' ? 'badge-danger' : 'badge-warning';
-                var statusLabel = e.status ? e.status.charAt(0).toUpperCase() + e.status.slice(1) : 'Upcoming';
-                
+                var statusLabel = e.status ? (e.status.charAt(0).toUpperCase() + e.status.slice(1)) : 'Upcoming';
+
                 var mediaHtml = '';
                 if (e.mediaGallery && e.mediaGallery.length > 0) {
-                    var firstMedia = e.mediaGallery[0];
-                    if (firstMedia.type === 'video') {
-                        mediaHtml = '<div style="margin-top:12px;cursor:pointer;" onclick="App.viewEventGallery(' + e.id + ', 0)"><video controls style="width:100%;max-height:200px;border-radius:8px;"><source src="' + firstMedia.data + '"></video></div>';
-                    } else {
-                        mediaHtml = '<div style="margin-top:12px;cursor:pointer;" onclick="App.viewEventGallery(' + e.id + ', 0)"><img src="' + firstMedia.data + '" style="width:100%;height:200px;object-fit:cover;border-radius:8px;"></div>';
-                    }
+                    var fm = e.mediaGallery[0];
+                    mediaHtml = fm.type === 'video'
+                        ? '<div style="margin-top:12px;"><video controls style="width:100%;max-height:180px;border-radius:8px;"><source src="' + fm.data + '"></video></div>'
+                        : '<div style="margin-top:12px;cursor:pointer;" onclick="App.viewEventGallery(' + e.id + ',0)"><img src="' + fm.data + '" style="width:100%;height:180px;object-fit:cover;border-radius:8px;"></div>';
                     if (e.mediaGallery.length > 1) {
-                        mediaHtml += '<div style="margin-top:8px;display:flex;gap:4px;flex-wrap:wrap;">';
-                        e.mediaGallery.forEach(function(m, idx) {
-                            if (idx > 0) {
-                                if (m.type === 'image') {
-                                    mediaHtml += '<img src="' + m.data + '" style="width:50px;height:50px;object-fit:cover;border-radius:4px;cursor:pointer;" onclick="App.viewEventGallery(' + e.id + ', ' + idx + ')">';
-                                } else {
-                                    mediaHtml += '<div style="width:50px;height:50px;background:#333;border-radius:4px;display:flex;align-items:center;justify-content:center;color:white;cursor:pointer;" onclick="App.viewEventGallery(' + e.id + ', ' + idx + ')"><i class="fas fa-video"></i></div>';
-                                }
-                            }
-                        });
+                        mediaHtml += '<div style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap;">';
+                        for (var mi = 1; mi < e.mediaGallery.length; mi++) {
+                            var m = e.mediaGallery[mi];
+                            mediaHtml += m.type === 'image'
+                                ? '<img src="' + m.data + '" style="width:48px;height:48px;object-fit:cover;border-radius:4px;cursor:pointer;" onclick="App.viewEventGallery(' + e.id + ',' + mi + ')">'
+                                : '<div style="width:48px;height:48px;background:#333;border-radius:4px;display:flex;align-items:center;justify-content:center;color:white;cursor:pointer;" onclick="App.viewEventGallery(' + e.id + ',' + mi + ')"><i class="fas fa-video"></i></div>';
+                        }
                         mediaHtml += '</div>';
                     }
                 } else if (e.media) {
-                    mediaHtml = '<div style="margin-top:12px;cursor:pointer;" onclick="App.viewImage(\'' + e.media + '\')"><img src="' + e.media + '" style="width:100%;height:200px;object-fit:cover;border-radius:8px;"></div>';
+                    mediaHtml = '<div style="margin-top:12px;"><img src="' + e.media + '" style="width:100%;height:180px;object-fit:cover;border-radius:8px;"></div>';
                 }
-                
+
+                // Inline status change dropdown
+                var statusSelect = '<select class="form-input" style="font-size:12px;padding:4px 8px;width:auto;display:inline-block;" onchange="App.changeEventStatus(' + e.id + ',this.value)">' +
+                    '<option value="upcoming"' + ((!e.status || e.status === 'upcoming') ? ' selected' : '') + '>Upcoming</option>' +
+                    '<option value="finished"' + (e.status === 'finished' ? ' selected' : '') + '>Finished</option>' +
+                    '<option value="cancelled"' + (e.status === 'cancelled' ? ' selected' : '') + '>Cancelled</option>' +
+                    '<option value="moved"' + (e.status === 'moved' ? ' selected' : '') + '>Moved</option>' +
+                    '</select>';
+
                 html += '<div class="card" style="overflow:hidden;">' +
-                    '<div class="card-header"><h3 class="card-title">' + e.title + '</h3>' +
-                    '<span class="card-badge ' + (e.pinned ? 'badge-warning' : 'badge-primary') + '">' + (e.pinned ? 'Pinned' : 'Event') + '</span></div>' +
-                    '<div class="card-body"><div style="text-align:center;margin-bottom:12px;">' +
-                    '<span class="badge ' + statusClass + '">' + statusLabel + '</span>' +
-                    '<span class="badge badge-secondary" style="margin-left:8px;">' + (e.category || 'General') + '</span>' +
-                    (e.batch ? '<span class="badge badge-secondary" style="margin-left:8px;">' + e.batch + '</span>' : '') + '</div>' +
+                    '<div class="card-header"><h3 class="card-title">' + (e.title || '') + '</h3>' +
+                    '<span class="badge ' + statusClass + '" style="font-size:11px;">' + statusLabel + '</span></div>' +
+                    '<div class="card-body">' +
+                    '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">' +
+                    '<span class="badge badge-secondary">' + (e.category || 'General') + '</span>' +
+                    (e.batch ? '<span class="badge badge-secondary">' + e.batch + '</span>' : '') + '</div>' +
                     '<div class="event-details">' +
-                    '<div class="event-detail"><i class="fas fa-calendar"></i> ' + e.date + '</div>' +
-                    '<div class="event-detail"><i class="fas fa-clock"></i> ' + e.time + '</div>' +
-                    '<div class="event-detail"><i class="fas fa-map-marker-alt"></i> ' + e.location + '</div></div>' +
-                    (e.evaluationLink ? '<div style="margin-top:8px;"><a href="' + e.evaluationLink + '" target="_blank" style="color:var(--primary-color);font-size:13px;"><i class="fas fa-clipboard"></i> Evaluation Form</a></div>' : '') +
+                    '<div class="event-detail"><i class="fas fa-calendar"></i> ' + (e.date || '') + '</div>' +
+                    '<div class="event-detail"><i class="fas fa-clock"></i> ' + (e.time || '') + '</div>' +
+                    '<div class="event-detail"><i class="fas fa-map-marker-alt"></i> ' + (e.location || '') + '</div></div>' +
+                    (e.evaluationLink ? '<div style="margin-top:8px;"><a href="' + e.evaluationLink + '" target="_blank" style="color:var(--primary-color);font-size:13px;"><i class="fas fa-clipboard-list"></i> Evaluation Form</a></div>' : '') +
                     mediaHtml +
-                    '<p class="card-text mt-4">' + e.description + '</p></div>' +
+                    (e.description ? '<p class="card-text" style="margin-top:8px;font-size:13px;">' + e.description + '</p>' : '') +
+                    '<div style="margin-top:12px;"><label style="font-size:12px;color:var(--text-light);display:block;margin-bottom:4px;">Change Status:</label>' + statusSelect + '</div>' +
+                    '</div>' +
                     '<div class="card-footer">' +
-                    '<button class="btn btn-secondary btn-sm" data-action="edit-event" data-id="' + e.id + '">Edit</button>' +
-                    '<button class="btn btn-danger btn-sm" data-action="delete-event" data-id="' + e.id + '">Delete</button></div></div>';
+                    '<button class="btn btn-secondary btn-sm" data-action="edit-event" data-id="' + e.id + '"><i class="fas fa-edit"></i> Edit</button>' +
+                    '<button class="btn btn-danger btn-sm" data-action="delete-event" data-id="' + e.id + '"><i class="fas fa-trash"></i> Delete</button></div></div>';
             }
             html += '</div>';
         }
-        
+
         html += self.renderCreateEventModal();
         return html;
     },
@@ -3775,20 +3769,73 @@ renderAdminContent: function() {
         this.renderAdminDashboard();
     },
 
+    filterEventStatus: function(value) {
+        this.currentFilter.eventStatus = value;
+        this.renderAdminDashboard();
+    },
+
+    changeEventStatus: function(eventId, newStatus) {
+        var ev = this.data.events.find(function(e) { return e.id == eventId; });
+        if (ev) {
+            ev.status = newStatus;
+            this.saveData();
+        }
+    },
+
+    updateEventDays: function() {
+        var year  = document.getElementById('event-year')  ? document.getElementById('event-year').value  : '';
+        var month = document.getElementById('event-month') ? document.getElementById('event-month').value : '';
+        var daySelect = document.getElementById('event-day');
+        if (!daySelect) return;
+        daySelect.innerHTML = '<option value="">Day</option>';
+        if (year && month) {
+            var days = new Date(parseInt(year), parseInt(month), 0).getDate();
+            for (var d = 1; d <= days; d++) {
+                var o = document.createElement('option');
+                o.value = d; o.textContent = d;
+                daySelect.appendChild(o);
+            }
+        }
+    },
+
     filterComplaints: function(status) {
         this.currentFilter.complaintStatus = status;
         this.renderAdminDashboard();
     },
 
     renderCreateEventModal: function() {
+        // Build batch/semester options dynamically from student + existing event data
+        var academicYears = {};
+        (this.data.users || []).forEach(function(u) {
+            if (u.batch) academicYears[u.batch.split(' - ')[0].trim()] = true;
+        });
+        (this.data.events || []).forEach(function(e) {
+            if (e.batch) academicYears[e.batch.split(' - ')[0].trim()] = true;
+        });
+        var cy = new Date().getFullYear();
+        academicYears[(cy - 1) + '-' + cy] = true;
+        academicYears[cy + '-' + (cy + 1)] = true;
+        var batchOpts = '<option value="">Select Batch / Semester</option>';
+        Object.keys(academicYears).sort().reverse().forEach(function(yr) {
+            batchOpts += '<option value="' + yr + ' - 1st Semester">' + yr + ' — 1st Semester</option>';
+            batchOpts += '<option value="' + yr + ' - 2nd Semester">' + yr + ' — 2nd Semester</option>';
+        });
+
+        // Build year options (current year ± 3)
+        var yearOpts = '<option value="">Year</option>';
+        for (var y = cy - 1; y <= cy + 4; y++) yearOpts += '<option value="' + y + '">' + y + '</option>';
+
         return '<div id="event-modal" class="modal" style="display:none;align-items:center;justify-content:center;" onclick="if(event.target === this) this.style.display=\'none\'">' +
-            '<div class="modal-content" style="max-width:600px;margin:auto;max-height:90vh;overflow-y:auto;">' +
+            '<div class="modal-content" style="max-width:620px;margin:auto;max-height:90vh;overflow-y:auto;">' +
                 '<div class="modal-header"><h3>Create Event</h3><button type="button" class="modal-close" id="close-event-modal" onclick="document.getElementById(\'event-modal\').style.display=\'none\'">&times;</button></div>' +
                 '<form id="event-form">' +
+
+                // Title
                 '<div class="form-group"><label class="form-label">Title *</label><input type="text" class="form-input" id="event-title" required></div>' +
+
+                // Category — Other reveals specify field
                 '<div class="form-group"><label class="form-label">Category *</label>' +
-                '<div style="display:flex;gap:8px;align-items:center;">' +
-                '<select class="form-input" id="event-category-select" style="flex:1;">' +
+                '<select class="form-input" id="event-category-select" onchange="var s=document.getElementById(\'event-category-specify-wrap\');if(s)s.style.display=this.value===\'Other\'?\'block\':\'none\';" required>' +
                 '<option value="">Select Category</option>' +
                 '<option value="Seminar">Seminar</option>' +
                 '<option value="Workshop">Workshop</option>' +
@@ -3798,85 +3845,70 @@ renderAdminContent: function() {
                 '<option value="Sports">Sports</option>' +
                 '<option value="Other">Other</option>' +
                 '</select>' +
-                '<span style="color:var(--text-light);">or</span>' +
-                '<input type="text" class="form-input" id="event-category-custom" placeholder="Custom category" style="flex:1;"></div></div>' +
+                '<div id="event-category-specify-wrap" style="display:none;margin-top:8px;">' +
+                '<input type="text" class="form-input" id="event-category-specify" placeholder="Please specify category"></div></div>' +
+
+                // Status — defaults to Upcoming for new events
                 '<div class="form-group"><label class="form-label">Status *</label>' +
                 '<select class="form-input" id="event-status" required>' +
-                '<option value="upcoming">Upcoming</option>' +
+                '<option value="upcoming" selected>Upcoming</option>' +
                 '<option value="finished">Finished</option>' +
                 '<option value="cancelled">Cancelled</option>' +
                 '<option value="moved">Moved</option>' +
                 '</select></div>' +
-                '<div class="form-group"><label class="form-label">Semester/Batch *</label>' +
-                '<select class="form-input" id="event-batch" required>' +
-                '<option value="">Select Batch</option>' +
-                '<option value="2025-2026">2025-2026</option>' +
-                '<option value="2024-2025">2024-2025</option>' +
-                '<option value="2023-2024">2023-2024</option>' +
-                '</select></div>' +
+
+                // Batch / Semester — dynamic from student data
+                '<div class="form-group"><label class="form-label">Batch / Semester *</label>' +
+                '<select class="form-input" id="event-batch" required>' + batchOpts + '</select></div>' +
+
+                // Date (Year / Month / Day)
                 '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">' +
                 '<div class="form-group"><label class="form-label">Year *</label>' +
-                '<select class="form-input" id="event-year" required>' +
-                '<option value="">Select</option>' +
-                '<option value="2025">2025</option>' +
-                '<option value="2026">2026</option>' +
-                '<option value="2027">2027</option>' +
-                '<option value="2028">2028</option>' +
-                '<option value="2029">2029</option>' +
-                '<option value="2030">2030</option>' +
-                '</select></div>' +
+                '<select class="form-input" id="event-year" onchange="App.updateEventDays()" required>' + yearOpts + '</select></div>' +
                 '<div class="form-group"><label class="form-label">Month *</label>' +
-                '<select class="form-input" id="event-month" required>' +
-                '<option value="">Select</option>' +
-                '<option value="01">Jan</option>' +
-                '<option value="02">Feb</option>' +
-                '<option value="03">Mar</option>' +
-                '<option value="04">Apr</option>' +
-                '<option value="05">May</option>' +
-                '<option value="06">Jun</option>' +
-                '<option value="07">Jul</option>' +
-                '<option value="08">Aug</option>' +
-                '<option value="09">Sep</option>' +
-                '<option value="10">Oct</option>' +
-                '<option value="11">Nov</option>' +
-                '<option value="12">Dec</option>' +
+                '<select class="form-input" id="event-month" onchange="App.updateEventDays()" required>' +
+                '<option value="">Month</option>' +
+                '<option value="01">January</option><option value="02">February</option><option value="03">March</option>' +
+                '<option value="04">April</option><option value="05">May</option><option value="06">June</option>' +
+                '<option value="07">July</option><option value="08">August</option><option value="09">September</option>' +
+                '<option value="10">October</option><option value="11">November</option><option value="12">December</option>' +
                 '</select></div>' +
                 '<div class="form-group"><label class="form-label">Day *</label>' +
-                '<select class="form-input" id="event-day" required>' +
-                '<option value="">Select</option>' +
-                '</select></div></div>' +
-                '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">' +
+                '<select class="form-input" id="event-day" required><option value="">Day</option></select></div></div>' +
+
+                // Time — clean Hour / Minute / AM-PM selects
                 '<div class="form-group"><label class="form-label">Time *</label>' +
-                '<input type="time" class="form-input" id="event-time" required list="time-options">' +
-                '<datalist id="time-options">' +
-                '<option value="07:00">' +
-                '<option value="08:00">' +
-                '<option value="09:00">' +
-                '<option value="10:00">' +
-                '<option value="11:00">' +
-                '<option value="12:00">' +
-                '<option value="13:00">' +
-                '<option value="14:00">' +
-                '<option value="15:00">' +
-                '<option value="16:00">' +
-                '<option value="17:00">' +
-                '<option value="18:00">' +
-                '<option value="19:00">' +
-                '<option value="20:00">' +
-                '</datalist></div>' +
-                '<div class="form-group"><label class="form-label">&nbsp;</label>' +
-                '<div style="font-size:11px;color:var(--text-light);padding-top:8px;">Type or select time</div></div></div>' +
+                '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">' +
+                '<select class="form-input" id="event-time-hour" required>' +
+                '<option value="">Hour</option>' +
+                '<option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option>' +
+                '<option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option>' +
+                '<option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option>' +
+                '</select>' +
+                '<select class="form-input" id="event-time-min" required>' +
+                '<option value="">Min</option>' +
+                '<option value="00">:00</option><option value="15">:15</option><option value="30">:30</option><option value="45">:45</option>' +
+                '</select>' +
+                '<select class="form-input" id="event-time-ampm" required>' +
+                '<option value="">AM/PM</option><option value="AM">AM</option><option value="PM">PM</option>' +
+                '</select></div></div>' +
+
+                // Location + Description
                 '<div class="form-group"><label class="form-label">Location *</label><input type="text" class="form-input" id="event-location" required></div>' +
                 '<div class="form-group"><label class="form-label">Description</label><textarea class="form-input" id="event-description" rows="3"></textarea></div>' +
-                '<div class="form-group"><label class="form-label">Images/Videos (Select multiple)</label>' +
+
+                // Media
+                '<div class="form-group"><label class="form-label">Images/Videos (Optional)</label>' +
                 '<div class="file-upload-wrapper" id="event-media-upload" style="cursor:pointer;min-height:100px;">' +
                 '<div class="file-upload-icon"><i class="fas fa-images"></i></div>' +
                 '<div class="file-upload-text">Click to select <span>Images/Videos</span></div>' +
                 '<div class="file-preview" id="event-media-preview" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;"></div></div>' +
                 '<input type="file" id="event-media-input" accept="image/*,video/*" multiple style="display:none;"></div>' +
-                '<div class="form-group"><label class="form-label">Evaluation Form Link (Optional)</label><input type="url" class="form-input" id="event-evaluation-link" placeholder="https://docs.google.com/forms/..."></div>' +
-                '<div class="form-group"><label class="checkbox-label"><input type="checkbox" id="event-evaluation-enabled"><span>Enable Evaluation</span></label></div>' +
-                '<div class="form-group"><label class="checkbox-label"><input type="checkbox" id="event-pin"><span>Pin this event (will appear first)</span></label></div>' +
+
+                // Evaluation link only (no checkbox)
+                '<div class="form-group"><label class="form-label">Evaluation Form Link <span style="font-size:11px;color:var(--text-light);font-weight:normal;">(Optional — paste Google Form URL)</span></label>' +
+                '<input type="url" class="form-input" id="event-evaluation-link" placeholder="https://docs.google.com/forms/..."></div>' +
+
                 '<div class="modal-actions"><button type="submit" class="btn btn-primary" id="event-submit-btn">Create Event</button></div>' +
                 '</form></div></div>';
     },
@@ -6221,7 +6253,7 @@ var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:
         
         var totalAttendees = events.reduce(function(sum, e) { return sum + (e.attendees ? e.attendees.length : 0); }, 0);
         var totalEvaluations = events.reduce(function(sum, e) { return sum + (e.evaluations ? e.evaluations.length : 0); }, 0);
-        var eventsWithEvals = events.filter(function(e) { return e.evaluationEnabled; }).length;
+        var eventsWithEvals = events.filter(function(e) { return e.evaluationLink; }).length;
         
         var totalAnnouncements = announcements.length;
         var pinnedAnnouncements = announcements.filter(function(a) { return a.pinned; }).length;
@@ -6781,8 +6813,8 @@ var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:
                 html += '<button class="btn btn-success btn-sm" data-action="mark-attended" data-id="' + e.id + '"><i class="fas fa-check"></i> Mark Attended</button>';
             }
             
-            // Evaluation form button
-            if (e.evaluationEnabled && e.evaluationLink && attended && !evaluated) {
+            // Evaluation form button — show if event has a link and student attended
+            if (e.evaluationLink && attended && !evaluated) {
                 html += '<button class="btn btn-info btn-sm" data-action="do-evaluation" data-id="' + e.id + '"><i class="fas fa-clipboard"></i> Do Evaluation</button>';
             }
             
@@ -7656,8 +7688,8 @@ var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:
             if (btn.classList.contains('listener-added')) return;
             btn.classList.add('listener-added');
             btn.addEventListener('click', function() {
-                var eventId = parseInt(btn.dataset.id);
-                var event = self.data.events.find(function(e) { return e.id === eventId; });
+                var eventId = btn.dataset.id;
+                var event = self.data.events.find(function(e) { return String(e.id) === String(eventId); });
                 if (event) {
                     document.getElementById('event-form').dataset.editId = eventId;
                     document.getElementById('event-submit-btn').textContent = 'Update Event';
@@ -7667,8 +7699,24 @@ var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:
                     document.getElementById('event-description').value = event.description || '';
                     if (document.getElementById('event-status')) document.getElementById('event-status').value = event.status || 'upcoming';
                     if (document.getElementById('event-batch')) document.getElementById('event-batch').value = event.batch || '';
-                    if (document.getElementById('event-pin')) document.getElementById('event-pin').checked = event.pinned || false;
-                    
+                    if (document.getElementById('event-evaluation-link')) document.getElementById('event-evaluation-link').value = event.evaluationLink || '';
+
+                    // Load category — handle "Other (specify)" case
+                    var catSelect = document.getElementById('event-category-select');
+                    var catSpecifyWrap = document.getElementById('event-category-specify-wrap');
+                    var catSpecify = document.getElementById('event-category-specify');
+                    var presetCats = ['Seminar','Workshop','Meeting','Conference','Social','Sports','Other'];
+                    if (catSelect) {
+                        if (event.category && presetCats.indexOf(event.category) !== -1) {
+                            catSelect.value = event.category;
+                            if (catSpecifyWrap) catSpecifyWrap.style.display = 'none';
+                        } else if (event.category) {
+                            catSelect.value = 'Other';
+                            if (catSpecifyWrap) catSpecifyWrap.style.display = 'block';
+                            if (catSpecify) catSpecify.value = event.category;
+                        }
+                    }
+
                     if (event.date) {
                         var parts = event.date.split('-');
                         if (parts.length === 3) {
@@ -7676,22 +7724,33 @@ var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:
                             if (document.getElementById('event-month')) document.getElementById('event-month').value = parts[1];
                             if (document.getElementById('event-day')) {
                                 var daySelect = document.getElementById('event-day');
-                                daySelect.innerHTML = '<option value="">Select</option>';
+                                daySelect.innerHTML = '<option value="">Day</option>';
                                 var daysInMonth = new Date(parseInt(parts[0]), parseInt(parts[1]), 0).getDate();
                                 for (var d = 1; d <= daysInMonth; d++) {
-                                    var option = document.createElement('option');
-                                    option.value = d;
-                                    option.textContent = d;
-                                    if (d === parseInt(parts[2])) option.selected = true;
-                                    daySelect.appendChild(option);
+                                    var opt = document.createElement('option');
+                                    opt.value = d;
+                                    opt.textContent = d;
+                                    if (d === parseInt(parts[2])) opt.selected = true;
+                                    daySelect.appendChild(opt);
                                 }
                             }
                         }
                     }
-                    if (event.time && document.getElementById('event-time')) {
-                        document.getElementById('event-time').value = event.time;
+
+                    // Load time into hour/min/ampm selects
+                    if (event.time) {
+                        var timeParts = event.time.split(' '); // "8:30 AM" or "08:30"
+                        var hmParts = timeParts[0].split(':');
+                        var hVal = parseInt(hmParts[0]);
+                        var mVal = hmParts[1] ? hmParts[1].substring(0,2) : '00';
+                        var ampm = timeParts[1] || (hVal >= 12 ? 'PM' : 'AM');
+                        if (!timeParts[1] && hVal > 12) { hVal = hVal - 12; } // convert 24h
+                        if (!timeParts[1] && hVal === 0) { hVal = 12; }
+                        if (document.getElementById('event-time-hour')) document.getElementById('event-time-hour').value = String(hVal);
+                        if (document.getElementById('event-time-min'))  document.getElementById('event-time-min').value  = mVal;
+                        if (document.getElementById('event-time-ampm')) document.getElementById('event-time-ampm').value = ampm;
                     }
-                    
+
                     if (event.mediaGallery && event.mediaGallery.length > 0) {
                         self.registerData = self.registerData || {};
                         self.registerData.eventMediaGallery = event.mediaGallery.slice();
@@ -8916,16 +8975,27 @@ eventForm.addEventListener('submit', function(e) {
                 var time = document.getElementById('event-time').value;
                 var location = document.getElementById('event-location').value;
                 
-                if (!title || !batch || !year || !month || !day || !time || !location) {
-                    alert('Please fill in all required fields');
+                var tHour = document.getElementById('event-time-hour') ? document.getElementById('event-time-hour').value : time;
+                var tAmpm = document.getElementById('event-time-ampm') ? document.getElementById('event-time-ampm').value : 'AM';
+                if (!title || !batch || !year || !month || !day || !tHour || !tAmpm || !location) {
+                    alert('Please fill in all required fields (including time)');
                     return;
                 }
                 
-                var date = year + '-' + month + '-' + (day.length === 1 ? '0' + day : day);
-                
-                var categorySelect = document.getElementById('event-category-select').value;
-                var categoryCustom = document.getElementById('event-category-custom').value;
-                var category = categoryCustom || categorySelect || 'General';
+                var date = year + '-' + month + '-' + (String(day).length === 1 ? '0' + day : day);
+
+                // Time from three selects
+                var timeHour = document.getElementById('event-time-hour') ? document.getElementById('event-time-hour').value : '';
+                var timeMin  = document.getElementById('event-time-min')  ? document.getElementById('event-time-min').value  : '00';
+                var timeAmpm = document.getElementById('event-time-ampm') ? document.getElementById('event-time-ampm').value : '';
+                var time = (timeHour && timeAmpm) ? timeHour + ':' + (timeMin || '00') + ' ' + timeAmpm : time;
+
+                var categorySelect = document.getElementById('event-category-select') ? document.getElementById('event-category-select').value : '';
+                var categorySpecify = document.getElementById('event-category-specify') ? document.getElementById('event-category-specify').value.trim() : '';
+                var category = (categorySelect === 'Other' && categorySpecify) ? categorySpecify : (categorySelect || 'General');
+
+                var evaluationLink = document.getElementById('event-evaluation-link') ? document.getElementById('event-evaluation-link').value.trim() : '';
+
                 var newEvent = {
                     id: document.getElementById('event-form').dataset.editId ? parseInt(document.getElementById('event-form').dataset.editId) : Date.now(),
                     title: title,
@@ -8936,8 +9006,11 @@ eventForm.addEventListener('submit', function(e) {
                     time: time,
                     location: location,
                     description: document.getElementById('event-description').value || '',
-                    rsvps: [],
-                    pinned: document.getElementById('event-pin') ? document.getElementById('event-pin').checked : false
+                    evaluationLink: evaluationLink,
+                    evaluationEnabled: evaluationLink !== '',
+                    attendees: [],
+                    evaluations: [],
+                    rsvps: []
                 };
                 
                 if (self.registerData && self.registerData.eventMedia) {
@@ -8953,16 +9026,14 @@ eventForm.addEventListener('submit', function(e) {
                 if (editId) {
                     var idx = self.data.events.findIndex(function(e) { return e.id == editId; });
                     if (idx > -1) {
-                        var existingRsvps = self.data.events[idx].rsvps;
-                        newEvent.rsvps = existingRsvps || [];
+                        var existing = self.data.events[idx];
+                        newEvent.rsvps = existing.rsvps || [];
+                        newEvent.attendees = existing.attendees || [];
+                        newEvent.evaluations = existing.evaluations || [];
+                        self.data.events[idx] = newEvent;
                     }
-                }
-                
-                if (editId) {
-                    var idx = self.data.events.findIndex(function(e) { return e.id == editId; });
-                    if (idx > -1) self.data.events[idx] = newEvent;
                 } else {
-                    self.data.events.push(newEvent);
+                    self.data.events.unshift(newEvent); // newest events appear first
                 }
                 
                 self.saveData();
