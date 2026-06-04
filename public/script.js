@@ -301,6 +301,23 @@ var App = {
                  if (!c.parentCommentId && c.parent_comment_id) c.parentCommentId = c.parent_comment_id;
              });
 
+             // Re-apply local like cache so user's likes are never lost by a data refresh
+             // _localLikesCache: { annId: 'liked' | 'unliked' } — set by the like handler
+             if (self._localLikesCache && self.currentUser && self.currentUser.email) {
+                 var userEmail = self.currentUser.email;
+                 (self.data.announcements || []).forEach(function(a) {
+                     var cached = self._localLikesCache[String(a.id)];
+                     if (!cached) return;
+                     if (!a.likes) a.likes = [];
+                     var idx = a.likes.indexOf(userEmail);
+                     if (cached === 'liked' && idx === -1) {
+                         a.likes.push(userEmail);          // Supabase missed it — re-apply
+                     } else if (cached === 'unliked' && idx > -1) {
+                         a.likes.splice(idx, 1);           // Supabase missed the unlike — re-apply
+                     }
+                 });
+             }
+
              // Snapshot AFTER normalization: baseline for change detection in _syncToSupabase
              self._apiSnapshotById = {};
              tableKeys.forEach(function(t) {
@@ -8820,7 +8837,7 @@ var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:
                 });
             }
 
-            // Like / Unlike Announcements — toggle and re-render for consistent counts
+            // Like / Unlike Announcements — toggle, cache locally, re-render
             document.querySelectorAll('[data-action="like-announcement"]').forEach(function(btn) {
                 if (btn.classList.contains('listener-added')) return;
                 btn.classList.add('listener-added');
@@ -8828,14 +8845,19 @@ var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:
                     var ann = self.data.announcements.find(function(a) { return String(a.id) === String(btn.dataset.id); });
                     if (!ann) return;
                     if (!ann.likes) ann.likes = [];
-                    var idx = ann.likes.indexOf(self.currentUser.email);
+                    var userEmail = self.currentUser.email;
+                    var idx = ann.likes.indexOf(userEmail);
                     if (idx === -1) {
-                        ann.likes.push(self.currentUser.email);
+                        ann.likes.push(userEmail);
                     } else {
                         ann.likes.splice(idx, 1);
                     }
+                    var nowLiked = ann.likes.indexOf(userEmail) !== -1;
+                    // Cache the explicit action so auto-refresh never undoes it
+                    if (!self._localLikesCache) self._localLikesCache = {};
+                    self._localLikesCache[String(ann.id)] = nowLiked ? 'liked' : 'unliked';
                     self.saveData();
-                    // Re-render so both student and admin see the correct count
+                    // Re-render so counts update correctly for everyone
                     var isAdminUser = self.currentUser && (self.currentUser.role === 'admin' || self.currentUser.adminRole);
                     if (isAdminUser) {
                         self.renderAdminDashboard();
