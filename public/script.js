@@ -1978,8 +1978,8 @@ var App = {
                         '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">' +
                         '<div class="form-group"><label class="form-label">First Name *</label>' +
                         '<input type="text" class="form-input" id="register-firstname" placeholder="First Name" required></div>' +
-                        '<div class="form-group"><label class="form-label">Middle Name</label>' +
-                        '<input type="text" class="form-input" id="register-middlename" placeholder="Middle Name"></div></div>' +
+                        '<div class="form-group"><label class="form-label">Middle Name <span style="font-size:11px;color:var(--text-light);font-weight:normal;">(Optional)</span></label>' +
+                        '<input type="text" class="form-input" id="register-middlename" placeholder="Leave blank or type N/A"></div></div>' +
                         '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">' +
                         '<div class="form-group"><label class="form-label">Last Name *</label>' +
                         '<input type="text" class="form-input" id="register-lastname" placeholder="Last Name" required></div>' +
@@ -2071,7 +2071,8 @@ var App = {
                         '<div class="form-group"><label class="form-label">Student ID *</label>' +
                         '<input type="text" class="form-input" id="register-student-id" placeholder="Enter your student ID" required></div>' +
                         '<div class="form-group"><label class="form-label">Email Address *</label>' +
-                        '<input type="email" class="form-input" id="register-email" placeholder="Enter your email" required></div>' +
+                        '<input type="email" class="form-input" id="register-email" placeholder="Auto-generated: lastname.studentnumber@csc.com" readonly style="background:var(--bg-color);cursor:not-allowed;" required>' +
+                        '<span style="font-size:11px;color:var(--text-light);margin-top:4px;display:block;">Auto-filled based on Last Name and Student ID</span></div>' +
                         '<div class="form-group"><label class="form-label">Password *</label>' +
                         '<div class="password-input-wrapper">' +
                         '<input type="password" class="form-input" id="register-password" placeholder="Create a password" required>' +
@@ -2086,22 +2087,23 @@ var App = {
                         '</div></div>' +
                         '<div style="margin:24px 0 12px;border-top:1px solid var(--border-color);padding-top:16px;">' +
                         '<h4 style="font-size:14px;font-weight:600;margin-bottom:12px;">Address Information</h4></div>' +
-                        '<div class="form-group"><label class="form-label">Street Address</label>' +
-                        '<input type="text" class="form-input" id="register-street" placeholder="House No., Street Name"></div>' +
+                        '<div class="form-group"><label class="form-label">Street Address *</label>' +
+                        '<input type="text" class="form-input" id="register-street" placeholder="House No., Street Name" required></div>' +
                         '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">' +
-                        '<div class="form-group"><label class="form-label">Barangay</label>' +
-                        '<input type="text" class="form-input" id="register-barangay" placeholder="Barangay"></div>' +
-                        '<div class="form-group"><label class="form-label">City/Municipality</label>' +
-                        '<input type="text" class="form-input" id="register-city" placeholder="City"></div></div>' +
+                        '<div class="form-group"><label class="form-label">Barangay *</label>' +
+                        '<input type="text" class="form-input" id="register-barangay" placeholder="Barangay" required></div>' +
+                        '<div class="form-group"><label class="form-label">City/Municipality *</label>' +
+                        '<input type="text" class="form-input" id="register-city" placeholder="City" required></div></div>' +
                         '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">' +
-                        '<div class="form-group"><label class="form-label">Province</label>' +
-                        '<input type="text" class="form-input" id="register-province" placeholder="Province"></div>' +
-                        '<div class="form-group"><label class="form-label">Postal Code</label>' +
-                        '<input type="text" class="form-input" id="register-postal" placeholder="Postal Code"></div>' +
+                        '<div class="form-group"><label class="form-label">Province *</label>' +
+                        '<input type="text" class="form-input" id="register-province" placeholder="Province" required></div>' +
+                        '<div class="form-group"><label class="form-label">Postal Code *</label>' +
+                        '<input type="text" class="form-input" id="register-postal" placeholder="Postal Code" required></div>' +
                         '<div class="form-group"><label class="form-label">Country</label>' +
                         '<input type="text" class="form-input" id="register-country" placeholder="Country" value="Philippines"></div></div>' +
                         '<div class="form-group"><label class="form-label">Cellphone Number *</label>' +
-                        '<input type="tel" class="form-input" id="register-cellphone" placeholder="e.g., 09123456789" required></div>' +
+                        '<input type="tel" class="form-input" id="register-cellphone" placeholder="+639XXXXXXXXX" required>' +
+                        '<span style="font-size:11px;color:var(--text-light);margin-top:4px;display:block;">Format: +639 followed by 9 digits (e.g. +639123456789)</span></div>' +
                         '<div style="margin:24px 0 12px;border-top:1px solid var(--border-color);padding-top:16px;">' +
                         '<h4 style="font-size:14px;font-weight:600;margin-bottom:12px;">Emergency Contact (Parent/Guardian)</h4></div>' +
                         '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">' +
@@ -2112,7 +2114,9 @@ var App = {
                         '<option value="">Select</option>' +
                         '<option value="Mother">Mother</option>' +
                         '<option value="Father">Father</option>' +
-                        '<option value="Guardian">Guardian</option></select></div></div>' +
+                        '<option value="Guardian">Guardian</option>' +
+                        '<option value="Other">Other (please specify)</option></select>' +
+                        '<input type="text" class="form-input" id="register-emergency-relation-other" placeholder="Please specify relationship" style="display:none;margin-top:6px;"></div></div>' +
                         '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">' +
                         '<div class="form-group"><label class="form-label">Parent/Guardian Birthday</label>' +
                         '<div id="parent-birthday-container" style="position:relative;">' +
@@ -2139,7 +2143,8 @@ var App = {
                         '<input type="hidden" id="register-parent-birthday-month"><input type="hidden" id="register-parent-birthday-day"><input type="hidden" id="register-parent-birthday-year">' +
                         '</div></div></div>' +
                         '<div class="form-group"><label class="form-label">Cellphone Number *</label>' +
-                        '<input type="tel" class="form-input" id="register-emergency-cellphone" placeholder="e.g., 09123456789" required></div>' +
+                        '<input type="tel" class="form-input" id="register-emergency-cellphone" placeholder="+639XXXXXXXXX" required>' +
+                        '<span style="font-size:11px;color:var(--text-light);margin-top:4px;display:block;">Format: +639 followed by 9 digits</span></div>' +
                         '<div class="form-group"><label class="form-label">Email</label>' +
                         '<input type="email" class="form-input" id="register-emergency-email" placeholder="Email Address"></div></div>' +
                         '<button type="submit" class="btn btn-primary btn-block">Next: Upload Documents</button>' +
@@ -2150,6 +2155,28 @@ var App = {
         
 this.attachPasswordToggle('register-password', 'toggle-password');
         this.attachPasswordToggle('register-confirm', 'toggle-confirm');
+
+        // Auto-generate email from lastname + student ID
+        function updateAutoEmail() {
+            var lastName = (document.getElementById('register-lastname').value || '').trim().toLowerCase().replace(/\s+/g, '');
+            var sId = (document.getElementById('register-student-id').value || '').trim().replace(/\s+/g, '');
+            var emailField = document.getElementById('register-email');
+            if (emailField) emailField.value = (lastName && sId) ? lastName + '.' + sId + '@csc.com' : '';
+        }
+        var lnField = document.getElementById('register-lastname');
+        var sidField = document.getElementById('register-student-id');
+        if (lnField) lnField.addEventListener('input', updateAutoEmail);
+        if (sidField) sidField.addEventListener('input', updateAutoEmail);
+
+        // Show/hide "Other specify" input for relationship
+        var relationSelect = document.getElementById('register-emergency-relation');
+        var relationOther  = document.getElementById('register-emergency-relation-other');
+        if (relationSelect && relationOther) {
+            relationSelect.addEventListener('change', function() {
+                relationOther.style.display = this.value === 'Other' ? 'block' : 'none';
+                relationOther.required = this.value === 'Other';
+            });
+        }
         
         // Birthday Picker Calendar
         var bdayDisplay = document.getElementById('birthday-display');
@@ -2169,46 +2196,48 @@ this.attachPasswordToggle('register-password', 'toggle-password');
         var monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
         var monthAbbr = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         
+        var today = new Date(); today.setHours(0,0,0,0);
+
         function renderBdayCalendar(month, year) {
             if (bdayMonthDisplay) bdayMonthDisplay.textContent = monthNames[month];
             if (bdayYearDisplay) bdayYearDisplay.textContent = year;
             bdayDays.innerHTML = '';
-            
+            var nextBtn = document.getElementById('bday-next-month');
+            if (nextBtn) nextBtn.disabled = (year > today.getFullYear() || (year === today.getFullYear() && month >= today.getMonth()));
+
             var firstDay = new Date(year, month, 1).getDay();
             var daysInMonth = new Date(year, month + 1, 0).getDate();
-            
+
             for (var i = 0; i < firstDay; i++) {
-                var emptyDiv = document.createElement('div');
-                bdayDays.appendChild(emptyDiv);
+                bdayDays.appendChild(document.createElement('div'));
             }
-            
+
             for (var day = 1; day <= daysInMonth; day++) {
-                var dayDiv = document.createElement('div');
-                dayDiv.textContent = day;
-                dayDiv.style.padding = '6px';
-                dayDiv.style.cursor = 'pointer';
-                dayDiv.style.borderRadius = '4px';
-                dayDiv.style.fontSize = '13px';
-                
-                dayDiv.addEventListener('click', function() {
-                    var selectedDay = this.textContent;
-                    document.getElementById('register-birthday-month').value = String(month + 1).padStart(2, '0');
-                    document.getElementById('register-birthday-day').value = selectedDay;
-                    document.getElementById('register-birthday-year').value = year;
-                    bdayDisplay.value = monthNames[month] + ' ' + selectedDay + ', ' + year;
-                    bdayCalendar.style.display = 'none';
-                });
-                
-                dayDiv.addEventListener('mouseenter', function() {
-                    this.style.background = 'var(--primary-color)';
-                    this.style.color = 'white';
-                });
-                dayDiv.addEventListener('mouseleave', function() {
-                    this.style.background = '';
-                    this.style.color = '';
-                });
-                
-                bdayDays.appendChild(dayDiv);
+                (function(d, m, y) {
+                    var dayDiv = document.createElement('div');
+                    dayDiv.textContent = d;
+                    dayDiv.style.padding = '6px';
+                    dayDiv.style.borderRadius = '4px';
+                    dayDiv.style.fontSize = '13px';
+                    var thisDate = new Date(y, m, d);
+                    if (thisDate > today) {
+                        dayDiv.style.color = 'var(--text-light)';
+                        dayDiv.style.opacity = '0.35';
+                        dayDiv.style.cursor = 'not-allowed';
+                    } else {
+                        dayDiv.style.cursor = 'pointer';
+                        dayDiv.addEventListener('click', function() {
+                            document.getElementById('register-birthday-month').value = String(m + 1).padStart(2, '0');
+                            document.getElementById('register-birthday-day').value = d;
+                            document.getElementById('register-birthday-year').value = y;
+                            bdayDisplay.value = monthNames[m] + ' ' + d + ', ' + y;
+                            bdayCalendar.style.display = 'none';
+                        });
+                        dayDiv.addEventListener('mouseenter', function() { this.style.background = 'var(--primary-color)'; this.style.color = 'white'; });
+                        dayDiv.addEventListener('mouseleave', function() { this.style.background = ''; this.style.color = ''; });
+                    }
+                    bdayDays.appendChild(dayDiv);
+                })(day, month, year);
             }
         }
         
@@ -2378,42 +2407,42 @@ this.attachPasswordToggle('register-password', 'toggle-password');
             if (parentMonthDisplay) parentMonthDisplay.textContent = monthNames[month];
             if (parentYearDisplay) parentYearDisplay.textContent = year;
             parentDays.innerHTML = '';
-            
+            var pNextBtn = document.getElementById('parent-next-month');
+            if (pNextBtn) pNextBtn.disabled = (year > today.getFullYear() || (year === today.getFullYear() && month >= today.getMonth()));
+
             var firstDay = new Date(year, month, 1).getDay();
             var daysInMonth = new Date(year, month + 1, 0).getDate();
-            
+
             for (var i = 0; i < firstDay; i++) {
-                var emptyDiv = document.createElement('div');
-                parentDays.appendChild(emptyDiv);
+                parentDays.appendChild(document.createElement('div'));
             }
-            
+
             for (var day = 1; day <= daysInMonth; day++) {
-                var dayDiv = document.createElement('div');
-                dayDiv.textContent = day;
-                dayDiv.style.padding = '6px';
-                dayDiv.style.cursor = 'pointer';
-                dayDiv.style.borderRadius = '4px';
-                dayDiv.style.fontSize = '13px';
-                
-                dayDiv.addEventListener('click', function() {
-                    var selectedDay = this.textContent;
-                    document.getElementById('register-parent-birthday-month').value = String(month + 1).padStart(2, '0');
-                    document.getElementById('register-parent-birthday-day').value = selectedDay;
-                    document.getElementById('register-parent-birthday-year').value = year;
-                    parentBdayDisplay.value = monthNames[month] + ' ' + selectedDay + ', ' + year;
-                    parentBdayCalendar.style.display = 'none';
-                });
-                
-                dayDiv.addEventListener('mouseenter', function() {
-                    this.style.background = 'var(--primary-color)';
-                    this.style.color = 'white';
-                });
-                dayDiv.addEventListener('mouseleave', function() {
-                    this.style.background = '';
-                    this.style.color = '';
-                });
-                
-                parentDays.appendChild(dayDiv);
+                (function(d, m, y) {
+                    var dayDiv = document.createElement('div');
+                    dayDiv.textContent = d;
+                    dayDiv.style.padding = '6px';
+                    dayDiv.style.borderRadius = '4px';
+                    dayDiv.style.fontSize = '13px';
+                    var thisDate = new Date(y, m, d);
+                    if (thisDate > today) {
+                        dayDiv.style.color = 'var(--text-light)';
+                        dayDiv.style.opacity = '0.35';
+                        dayDiv.style.cursor = 'not-allowed';
+                    } else {
+                        dayDiv.style.cursor = 'pointer';
+                        dayDiv.addEventListener('click', function() {
+                            document.getElementById('register-parent-birthday-month').value = String(m + 1).padStart(2, '0');
+                            document.getElementById('register-parent-birthday-day').value = d;
+                            document.getElementById('register-parent-birthday-year').value = y;
+                            parentBdayDisplay.value = monthNames[m] + ' ' + d + ', ' + y;
+                            parentBdayCalendar.style.display = 'none';
+                        });
+                        dayDiv.addEventListener('mouseenter', function() { this.style.background = 'var(--primary-color)'; this.style.color = 'white'; });
+                        dayDiv.addEventListener('mouseleave', function() { this.style.background = ''; this.style.color = ''; });
+                    }
+                    parentDays.appendChild(dayDiv);
+                })(day, month, year);
             }
         }
         
@@ -2586,16 +2615,13 @@ this.attachPasswordToggle('register-password', 'toggle-password');
                 var pass = document.getElementById('register-password').value;
                 var confirm = document.getElementById('register-confirm').value;
                 
-                var street = document.getElementById('register-street').value;
-                var barangay = document.getElementById('register-barangay').value;
-                var city = document.getElementById('register-city').value;
-                var province = document.getElementById('register-province').value;
-                var postal = document.getElementById('register-postal').value;
                 var country = document.getElementById('register-country').value;
                 var cellphone = document.getElementById('register-cellphone').value;
                 
                 var emergencyName = document.getElementById('register-emergency-name').value;
-                var emergencyRelation = document.getElementById('register-emergency-relation').value;
+                var emergencyRelationRaw = document.getElementById('register-emergency-relation').value;
+                var emergencyRelationOther = document.getElementById('register-emergency-relation-other') ? document.getElementById('register-emergency-relation-other').value.trim() : '';
+                var emergencyRelation = (emergencyRelationRaw === 'Other' && emergencyRelationOther) ? emergencyRelationOther : emergencyRelationRaw;
                 var emergencyBdayMonth = document.getElementById('register-parent-birthday-month').value;
                 var emergencyBdayDay = document.getElementById('register-parent-birthday-day').value;
                 var emergencyBdayYear = document.getElementById('register-parent-birthday-year').value;
@@ -2612,10 +2638,32 @@ this.attachPasswordToggle('register-password', 'toggle-password');
                     }
                     return;
                 }
-                
+
+                var street = document.getElementById('register-street').value.trim();
+                var barangay = document.getElementById('register-barangay').value.trim();
+                var city = document.getElementById('register-city').value.trim();
+                var province = document.getElementById('register-province').value.trim();
+                var postal = document.getElementById('register-postal').value.trim();
+                if (!street || !barangay || !city || !province || !postal) {
+                    if (errorEl) {
+                        errorEl.textContent = 'Complete address is required (Street, Barangay, City, Province, Postal Code)';
+                        errorEl.style.display = 'block';
+                    }
+                    return;
+                }
+
                 if (!cellphone) {
                     if (errorEl) {
                         errorEl.textContent = 'Cellphone number is required';
+                        errorEl.style.display = 'block';
+                    }
+                    return;
+                }
+
+                var phoneRegex = /^\+639\d{9}$/;
+                if (!phoneRegex.test(cellphone)) {
+                    if (errorEl) {
+                        errorEl.textContent = 'Cellphone must be in the format +639XXXXXXXXX (e.g. +639123456789)';
                         errorEl.style.display = 'block';
                     }
                     return;
@@ -2624,6 +2672,14 @@ this.attachPasswordToggle('register-password', 'toggle-password');
                 if (!emergencyName || !emergencyRelation || !emergencyCellphone) {
                     if (errorEl) {
                         errorEl.textContent = 'Emergency contact information is required';
+                        errorEl.style.display = 'block';
+                    }
+                    return;
+                }
+
+                if (!phoneRegex.test(emergencyCellphone)) {
+                    if (errorEl) {
+                        errorEl.textContent = 'Parent/Guardian cellphone must be in the format +639XXXXXXXXX';
                         errorEl.style.display = 'block';
                     }
                     return;
@@ -2961,14 +3017,11 @@ this.attachPasswordToggle('register-password', 'toggle-password');
         var self = this;
         var app = document.getElementById('app');
         if (!app) return;
-        
-        var otp = Math.floor(100000 + Math.random() * 900000).toString();
-        this.registerData.otp = otp;
-        this.registerData.otpExpiry = Date.now() + 5 * 60 * 1000;
-        
-        this.sendRealOTP(this.registerData.email, otp);
-        
-        app.innerHTML = 
+
+        // Send a confirmation email (no OTP code — just a notification)
+        this.sendRealOTP(this.registerData.email, 'CONFIRM');
+
+        app.innerHTML =
             '<div class="auth-page">' +
                 '<div class="auth-card registration-card">' +
                     '<div class="register-steps">' +
@@ -2978,30 +3031,24 @@ this.attachPasswordToggle('register-password', 'toggle-password');
                     '</div>' +
                     '<div class="auth-header">' +
                         '<div class="auth-logo"><img src="csc-logo.jpeg" alt="CSC Logo"></div>' +
-                        '<h1 class="auth-title">Verify Email</h1>' +
-                        '<p class="auth-subtitle">Step 3: Enter the 6-digit code sent to your email</p>' +
+                        '<h1 class="auth-title">Verify Your Email</h1>' +
+                        '<p class="auth-subtitle">Step 3: Email Confirmation</p>' +
                     '</div>' +
                     '<button class="register-back-btn" id="back-to-step2"><i class="fas fa-arrow-left"></i> Back</button>' +
-                    '<div id="otp-error" class="alert alert-error" style="display:none;"></div>' +
-                    '<div id="otp-success" class="alert alert-success" style="display:none;"></div>' +
-                    '<p class="text-sm text-muted" style="text-align:center;margin-bottom:16px;">A verification code has been sent to: <strong>' + this.registerData.email + '</strong></p>' +
-                    '<form id="otp-form">' +
-                        '<div class="otp-inputs">' +
-                        '<input type="text" class="form-input otp-input" id="otp-1" maxlength="1" required>' +
-                        '<input type="text" class="form-input otp-input" id="otp-2" maxlength="1" required>' +
-                        '<input type="text" class="form-input otp-input" id="otp-3" maxlength="1" required>' +
-                        '<input type="text" class="form-input otp-input" id="otp-4" maxlength="1" required>' +
-                        '<input type="text" class="form-input otp-input" id="otp-5" maxlength="1" required>' +
-                        '<input type="text" class="form-input otp-input" id="otp-6" maxlength="1" required>' +
-                        '</div>' +
-                        '<button type="submit" class="btn btn-primary btn-block" style="margin-top:16px;">Verify Email</button>' +
-                    '</form>' +
-                    '<div class="resend-otp">Don\'t receive the code? <a id="resend-otp">Resend Code</a></div>' +
+                    '<div id="verify-success" class="alert alert-success" style="display:none;"></div>' +
+                    '<div style="text-align:center;padding:24px 0;">' +
+                        '<div style="font-size:56px;color:var(--primary-color);margin-bottom:16px;"><i class="fas fa-envelope-open-text"></i></div>' +
+                        '<p style="font-size:15px;color:var(--text-color);margin-bottom:8px;">A confirmation email has been sent to:</p>' +
+                        '<p style="font-size:16px;font-weight:700;color:var(--primary-color);margin-bottom:20px;">' + this.registerData.email + '</p>' +
+                        '<p style="font-size:13px;color:var(--text-light);margin-bottom:28px;line-height:1.6;">Please check your email inbox. Once you have reviewed it,<br>click the button below to confirm and complete your registration.</p>' +
+                        '<button class="btn btn-primary btn-block" id="confirm-email-btn" style="font-size:16px;padding:14px;">' +
+                            '<i class="fas fa-check-circle" style="margin-right:8px;"></i>Confirm Email &amp; Submit Registration' +
+                        '</button>' +
+                        '<p style="font-size:12px;color:var(--text-light);margin-top:16px;">Didn\'t receive the email? <a href="#" id="resend-confirm-email" style="color:var(--primary-color);">Resend Email</a></p>' +
+                    '</div>' +
                 '</div>' +
             '</div>';
-        
-        this.attachOTPInput();
-        
+
         var backBtn = document.getElementById('back-to-step2');
         if (backBtn) {
             backBtn.addEventListener('click', function(e) {
@@ -3009,47 +3056,21 @@ this.attachPasswordToggle('register-password', 'toggle-password');
                 self.renderRegister(2);
             });
         }
-        
-        var otpForm = document.getElementById('otp-form');
-        if (otpForm) {
-            otpForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                var enteredOtp = '';
-                for (var i = 1; i <= 6; i++) {
-                    enteredOtp += document.getElementById('otp-' + i).value;
-                }
-                
-                var errorEl = document.getElementById('otp-error');
-                var successEl = document.getElementById('otp-success');
-                
-                if (enteredOtp !== self.registerData.otp) {
-                    if (errorEl) {
-                        errorEl.textContent = 'Invalid verification code';
-                        errorEl.style.display = 'block';
-                    }
-                    document.querySelectorAll('.otp-input').forEach(function(inp) { inp.classList.add('error'); });
-                    return;
-                }
-                
-                if (Date.now() > self.registerData.otpExpiry) {
-                    if (errorEl) {
-                        errorEl.textContent = 'Verification code expired';
-                        errorEl.style.display = 'block';
-                    }
-                    return;
-                }
-                
+
+        var confirmBtn = document.getElementById('confirm-email-btn');
+        if (confirmBtn) {
+            confirmBtn.addEventListener('click', function() {
+                confirmBtn.disabled = true;
+                confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right:8px;"></i>Submitting...';
+
                 self.registerData.emailVerified = true;
-                if (errorEl) errorEl.style.display = 'none';
-                
-                var currentBatch = '2025-2026';
                 var fullName = self.registerData.firstName;
-                if (self.registerData.middleName) fullName += ' ' + self.registerData.middleName;
+                if (self.registerData.middleName && self.registerData.middleName !== 'N/A') fullName += ' ' + self.registerData.middleName;
                 fullName += ' ' + self.registerData.lastName;
                 if (self.registerData.suffix) fullName += ' ' + self.registerData.suffix;
-                
-                 var newUser = {
-                     id: crypto.randomUUID(),
+
+                var newUser = {
+                    id: crypto.randomUUID(),
                     name: fullName,
                     firstName: self.registerData.firstName,
                     middleName: self.registerData.middleName || '',
@@ -3082,44 +3103,26 @@ this.attachPasswordToggle('register-password', 'toggle-password');
                 self.data.users.push(newUser);
                 self.saveData();
                 self.registerData = null;
-                
+
+                var successEl = document.getElementById('verify-success');
                 if (successEl) {
-                    successEl.textContent = 'Email verified! Your account is pending admin approval.';
+                    successEl.textContent = 'Registration submitted! Your account is pending admin approval.';
                     successEl.style.display = 'block';
                 }
-                
-                setTimeout(function() { 
-                    self.renderPendingApproval(); 
-                }, 2000);
+                setTimeout(function() { self.renderPendingApproval(); }, 1800);
             });
         }
-        
-        var resendBtn = document.getElementById('resend-otp');
+
+        var resendBtn = document.getElementById('resend-confirm-email');
         if (resendBtn) {
             resendBtn.addEventListener('click', function(e) {
                 e.preventDefault();
                 if (this.classList.contains('disabled')) return;
-                
-                var newOtp = Math.floor(100000 + Math.random() * 900000).toString();
-                self.registerData.otp = newOtp;
-                self.registerData.otpExpiry = Date.now() + 5 * 60 * 1000;
-                
-                self.sendRealOTP(self.registerData.email, newOtp);
-                
+                self.sendRealOTP(self.registerData.email, 'CONFIRM');
+                this.textContent = 'Email resent!';
                 this.classList.add('disabled');
-                this.textContent = 'Resend Code (59s)';
-                
-                var countdown = 59;
-                var interval = setInterval(function() {
-                    countdown--;
-                    if (countdown <= 0) {
-                        clearInterval(interval);
-                        resendBtn.classList.remove('disabled');
-                        resendBtn.textContent = 'Resend Code';
-                    } else {
-                        resendBtn.textContent = 'Resend Code (' + countdown + 's)';
-                    }
-                }, 1000);
+                var link = this;
+                setTimeout(function() { link.textContent = 'Resend Email'; link.classList.remove('disabled'); }, 30000);
             });
         }
     },
@@ -4549,7 +4552,7 @@ var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:
                 
                 var hasDocs = user.profilePic || user.schoolIdPic;
                 
-                html += '<div onclick="App.showPendingDetail(' + user.id + ')" style="background:var(--bg-white);border-radius:var(--radius-md);border:1px solid var(--border-color);padding:16px;cursor:pointer;transition:all 0.2s;">' +
+                html += '<div onclick="App.showPendingDetail(\'' + user.id + '\')" style="background:var(--bg-white);border-radius:var(--radius-md);border:1px solid var(--border-color);padding:16px;cursor:pointer;transition:all 0.2s;">' +
                     '<div style="display:flex;align-items:center;gap:16px;">' +
                     '<div style="flex-shrink:0;">' + profilePicHtml + '</div>' +
                     '<div style="flex:1;min-width:150px;">' +
@@ -4566,7 +4569,7 @@ var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:
                     '<span class="badge badge-warning">Pending</span>' +
                     '</div>' +
                     '<div style="flex-shrink:0;display:flex;gap:8px;" onclick="event.stopPropagation();">' +
-                    (hasDocs ? '<button class="btn btn-secondary btn-sm" onclick="App.showDocModal(' + user.id + ')"><i class="fas fa-file-image"></i></button>' : '') +
+                    (hasDocs ? '<button class="btn btn-secondary btn-sm" onclick="App.showDocModal(\'' + user.id + '\')"><i class="fas fa-file-image"></i></button>' : '') +
                     '<button class="btn btn-success btn-sm" data-action="approve-user" data-id="' + user.id + '" title="Approve"><i class="fas fa-check"></i></button> ' +
                     '<button class="btn btn-danger btn-sm" data-action="deny-user" data-id="' + user.id + '" title="Deny"><i class="fas fa-times"></i></button>' +
                     '</div>' +
@@ -4612,8 +4615,8 @@ var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:
             '<h3 style="margin:16px 0 8px;">' + (user.name || 'Unknown') + '</h3>' +
             '<span class="badge badge-warning">Pending</span>' +
             '<div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">' +
-            '<button class="btn btn-danger btn-sm" onclick="if(confirm(\'Deny this request?\')){App.denyUser(' + user.id + ');}"><i class="fas fa-times"></i> Deny</button> ' +
-            '<button class="btn btn-success btn-sm" onclick="if(confirm(\'Approve this request?\')){App.approveUser(' + user.id + ');}"><i class="fas fa-check"></i> Approve</button>' +
+            '<button class="btn btn-danger btn-sm" onclick="if(confirm(\'Deny this request?\')){App.denyUser(\'' + user.id + '\');}"><i class="fas fa-times"></i> Deny</button> ' +
+            '<button class="btn btn-success btn-sm" onclick="if(confirm(\'Approve this request?\')){App.approveUser(\'' + user.id + '\');}"><i class="fas fa-check"></i> Approve</button>' +
             '</div>' +
             '</div>' +
             '<div style="background:var(--bg-white);border-radius:var(--radius-md);border:1px solid var(--border-color);padding:16px;">' +
@@ -4683,7 +4686,7 @@ var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:
     },
 
     approveUser: function(userId) {
-        var user = this.data.users.find(function(u) { return u.id === userId; });
+        var user = this.data.users.find(function(u) { return String(u.id) === String(userId); });
         if (user) {
             user.status = 'active';
             user.active = true;
@@ -4693,14 +4696,16 @@ var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:
             this.currentPendingDetail = null;
             this.renderAdminDashboard();
             alert(user.name + ' has been approved!');
+        } else {
+            alert('User not found. Please refresh.');
         }
     },
 
     denyUser: function(userId) {
-        var user = this.data.users.find(function(u) { return u.id === userId; });
+        var user = this.data.users.find(function(u) { return String(u.id) === String(userId); });
         if (user) {
-            if (confirm('Deny ' + user.name + '\'s registration? This will remove the user.')) {
-                var index = this.data.users.findIndex(function(u) { return u.id === userId; });
+            if (confirm('Deny ' + user.name + '\'s registration? This will remove the user permanently.')) {
+                var index = this.data.users.findIndex(function(u) { return String(u.id) === String(userId); });
                 if (index > -1) {
                     this.data.users.splice(index, 1);
                     this.saveData();
@@ -4709,6 +4714,8 @@ var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:
                     alert(user.name + ' has been denied and removed.');
                 }
             }
+        } else {
+            alert('User not found. Please refresh.');
         }
     },
 
@@ -7729,17 +7736,21 @@ var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:
         document.querySelectorAll('[data-action="approve-user"]').forEach(function(btn) {
             if (btn.classList.contains('listener-added')) return;
             btn.classList.add('listener-added');
-            btn.addEventListener('click', function() {
-                var userId = parseInt(btn.dataset.id);
-                var user = self.data.users.find(function(u) { return u.id === userId; });
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                var userId = btn.dataset.id;
+                var user = self.data.users.find(function(u) { return String(u.id) === String(userId); });
                 if (user) {
                     if (confirm('Approve ' + user.name + '\'s registration?')) {
                         user.status = 'active';
                         user.active = true;
                         self.saveData();
+                        self.currentPendingDetail = null;
                         self.renderAdminDashboard();
                         alert(user.name + ' has been approved!');
                     }
+                } else {
+                    alert('User not found. Please refresh the page.');
                 }
             });
         });
@@ -7748,27 +7759,24 @@ var html = '<div class="content-actions" style="display:flex;gap:12px;flex-wrap:
         document.querySelectorAll('[data-action="deny-user"]').forEach(function(btn) {
             if (btn.classList.contains('listener-added')) return;
             btn.classList.add('listener-added');
-            btn.addEventListener('click', function() {
-                var userId = parseInt(btn.dataset.id);
-                var user = self.data.users.find(function(u) { return u.id === userId; });
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                var userId = btn.dataset.id;
+                var user = self.data.users.find(function(u) { return String(u.id) === String(userId); });
                 if (user) {
-                    if (confirm('Deny ' + user.name + '\'s registration? This will remove the user.')) {
-                        var index = self.data.users.findIndex(function(u) { return u.id === userId; });
+                    if (confirm('Deny ' + user.name + '\'s registration? This will remove the user permanently.')) {
+                        var index = self.data.users.findIndex(function(u) { return String(u.id) === String(userId); });
                         if (index > -1) {
                             self.data.users.splice(index, 1);
                             self.saveData();
+                            self.currentPendingDetail = null;
                             self.renderAdminDashboard();
                             alert(user.name + ' has been denied and removed.');
                         }
                     }
+                } else {
+                    alert('User not found. Please refresh the page.');
                 }
-            });
-        });
-
-        // Approve/Deny buttons click stop propagation
-        document.querySelectorAll('[data-action="approve-user"], [data-action="deny-user"]').forEach(function(btn) {
-            btn.addEventListener('click', function(e) {
-                e.stopPropagation();
             });
         });
 
